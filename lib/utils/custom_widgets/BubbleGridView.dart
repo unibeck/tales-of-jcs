@@ -1,11 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/CircleButton.dart';
 
 class BubbleGridView extends StatefulWidget {
-  BubbleGridView({@required this.child,
+  BubbleGridView({@required this.children,
     this.velocityFactor, this.scrollListener});
 
-  final Widget child;
+  final List<CircleButton> children;
   final double velocityFactor;
   final ValueChanged<Offset> scrollListener;
 
@@ -13,8 +15,7 @@ class BubbleGridView extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    _state = new BubbleGridViewState(child, velocityFactor,
-        scrollListener);
+    _state = new BubbleGridViewState(children, velocityFactor, scrollListener);
     return _state;
   }
 
@@ -59,7 +60,7 @@ class BubbleGridViewState extends State<BubbleGridView>
   final GlobalKey _containerKey = new GlobalKey();
   final GlobalKey _positionedKey = new GlobalKey();
 
-  Widget _child;
+  List<CircleButton> _children;
   double _velocityFactor = 1.0;
   ValueChanged<Offset> _scrollListener;
 
@@ -73,9 +74,9 @@ class BubbleGridViewState extends State<BubbleGridView>
 
   bool _enableFling = false;
 
-  BubbleGridViewState(Widget child, double velocityFactor,
+  BubbleGridViewState(List<CircleButton> children, double velocityFactor,
       ValueChanged<Offset> scrollListener) {
-    _child = child;
+    _children = children;
     if (velocityFactor != null) {
       this._velocityFactor = velocityFactor;
     }
@@ -86,6 +87,16 @@ class BubbleGridViewState extends State<BubbleGridView>
 
   @override
   void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      //Take the center of the widget and center it to the center of the container
+      double widgetXContainerWidthCenter = -((containerWidth / 2) - width / 2);
+      double widgetXContainerHeightCenter = -((containerHeight / 2) - height / 2);
+
+      xPos = widgetXContainerWidthCenter;
+      yPos = widgetXContainerHeightCenter;
+      offset = new Offset(widgetXContainerWidthCenter, widgetXContainerHeightCenter);
+    });
+
     super.initState();
     _controller = new AnimationController(vsync: this)
       ..addListener(_handleFlingAnimation);
@@ -135,15 +146,19 @@ class BubbleGridViewState extends State<BubbleGridView>
     double newXPosition = xPos + _flingAnimation.value.dx;
     double newYPosition = yPos + _flingAnimation.value.dy;
 
-    if (newXPosition > 0.0 || width < containerWidth) {
-      newXPosition = 0.0;
-    } else if (-newXPosition + containerWidth > width) {
+//    if (newXPosition > 0.0 || width < containerWidth) {
+//      newXPosition = 0.0;
+//    } else
+
+    if (-newXPosition + containerWidth > width) {
       newXPosition = containerWidth - width;
     }
 
-    if (newYPosition > 0.0 || height < containerHeight) {
-      newYPosition = 0.0;
-    } else if (-newYPosition + containerHeight > height) {
+//    if (newYPosition > 0.0 || height < containerHeight) {
+//      newYPosition = 0.0;
+//    } else
+
+    if (-newYPosition + containerHeight > height) {
       newYPosition = containerHeight - height;
     }
 
@@ -162,20 +177,20 @@ class BubbleGridViewState extends State<BubbleGridView>
     double newXPosition = xViewPos + (position.dx - xPos);
     double newYPosition = yViewPos + (position.dy - yPos);
 
-    RenderBox containerBox = _containerKey.currentContext.findRenderObject();
-    double containerWidth = containerBox.size.width;
-    double containerHeight = containerBox.size.height;
 
+//    if (newXPosition > 0.0 || width < containerWidth) {
+//      newXPosition = 0.0;
+//    } else
 
-    if (newXPosition > 0.0 || width < containerWidth) {
-      newXPosition = 0.0;
-    } else if (-newXPosition + containerWidth > width) {
+    if (-newXPosition + containerWidth > width) {
       newXPosition = containerWidth - width;
     }
 
-    if (newYPosition > 0.0 || height < containerHeight) {
-      newYPosition = 0.0;
-    } else if (-newYPosition + containerHeight > height) {
+//    if (newYPosition > 0.0 || height < containerHeight) {
+//      newYPosition = 0.0;
+//    } else
+//
+    if (-newYPosition + containerHeight > height) {
       newYPosition = containerHeight - height;
     }
 
@@ -235,14 +250,15 @@ class BubbleGridViewState extends State<BubbleGridView>
           key: _containerKey,
           child: new Stack(
             overflow: Overflow.visible,
-            children: <Widget>[
-              new Positioned(
-                  key: _positionedKey,
-                  top: yViewPos,
-                  left: xViewPos,
-                  child: _child
-              ),
-            ],
+            children: _children.map((widget) {
+              return new Positioned(
+                //TODO: Need a positionKey for all (or only the center widget?) widgets. For now this only works with one widget
+                key: _positionedKey,
+                top: yViewPos,
+                left: xViewPos,
+                child: widget,
+              );
+            }).toList(),
           )
       ),
     );
