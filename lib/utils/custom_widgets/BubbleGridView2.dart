@@ -1,11 +1,9 @@
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:tales_of_jcs/utils/custom_widgets/HexRow.dart';
-import 'package:tales_of_jcs/utils/custom_widgets/VerticalOriginList.dart';
-
-import 'package:tuple/tuple.dart';
-
 import 'package:tales_of_jcs/utils/custom_widgets/CircleButton.dart';
 
 class BubbleGridView extends StatefulWidget {
@@ -65,7 +63,7 @@ class BubbleGridViewState extends State<BubbleGridView>
   final GlobalKey _containerKey = new GlobalKey();
   final GlobalKey _positionedKey = new GlobalKey();
 
-  List<CircleButton> _children;
+  List<BubbleButton> _children;
   double _velocityFactor = 1.0;
   ValueChanged<Offset> _scrollListener;
 
@@ -74,6 +72,13 @@ class BubbleGridViewState extends State<BubbleGridView>
   double xViewPos = 0.0;
   double yViewPos = 0.0;
 
+//  double x = 0.0;
+//  double y = 0.0;
+  double centerX = 0.0;
+  double centerY = 0.0;
+  double offsetX = 0.0;
+  double offsetY = 0.0;
+
   AnimationController _controller;
   Animation<Offset> _flingAnimation;
 
@@ -81,7 +86,7 @@ class BubbleGridViewState extends State<BubbleGridView>
 
   BubbleGridViewState(List<CircleButton> children, double velocityFactor,
       ValueChanged<Offset> scrollListener) {
-    _children = children;
+    _children = wrapCircles(children);
     if (velocityFactor != null) {
       this._velocityFactor = velocityFactor;
     }
@@ -93,21 +98,105 @@ class BubbleGridViewState extends State<BubbleGridView>
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      //Take the center of the widget and center it to the center of the container
-      double widgetXContainerWidthCenter = -((containerWidth / 2) - width / 2);
-      double widgetXContainerHeightCenter = -((containerHeight / 2) - height / 2);
-
-      xPos = widgetXContainerWidthCenter;
-      yPos = widgetXContainerHeightCenter;
-      offset = new Offset(widgetXContainerWidthCenter, widgetXContainerHeightCenter);
+      centerX = containerWidth / 2;
+      centerY = containerHeight / 2;
     });
 
     super.initState();
     _controller = new AnimationController(vsync: this)
       ..addListener(_handleFlingAnimation);
   }
+  
+  List<BubbleButton> wrapCircles(List<CircleButton> list) {
+    int RADIUS = 50;
+    int PADDING = 55;
+    int PADDINGY = 45;
+    int x = 0;
+    int y = 0;
+    List<BubbleButton> bubbleButtonList;
+    
+    for (int i = 0; i < 10; i += 1) {
+      for (int j = 0; j < 10; j += 1) {
+        bubbleButtonList.add(BubbleButton(
+            x, y,
+            onTap: () {
+              final snackBar = SnackBar(content: Text("You tapped bubble $i"));
+              Scaffold.of(context).showSnackBar(snackBar);
+            },
+            title: "Bubble $i"
+        ));
 
-  set offset(Offset offset) {
+        x += RADIUS + PADDING;
+      }
+
+      if (i % 2 == 0) {
+        x = PADDING;
+      } else {
+        x = 0;
+      }
+
+      y += RADIUS + PADDINGY;
+    }
+
+    return bubbleButtonList;
+  }
+
+  void draw() {
+    var scale,
+        closest;
+
+//    offsetX = mouseX - centerX;
+//    offsetY = mouseY - centerY;
+//    ctx.translate(offsetX, offsetY);
+
+    closest = getClosest();
+
+    for (int i = 0; i < _children.length; i++) {
+      scale = getDistance(_children[i]);
+    }
+  }
+
+  CircleButton getClosest() {
+    var close,
+        dx,
+        dy,
+        dist,
+        closest;
+
+    for (int i = 0; i < _children.length; i++) {
+      dx = _children[i].x + offsetX - centerX;
+      dy = _children[i].y + offsetY - centerY;
+
+      dist = sqrt(dx * dx + dy * dy);
+
+      if (!close) {
+        close = dist;
+        closest = i;
+      } else if (dist < close) {
+        close = dist;
+        closest = i;
+      }
+    }
+
+    return closest;
+  }
+
+  double getDistance(BubbleButton bubble) {
+    var dx,
+        dy,
+        dist;
+
+    dx = bubble.x + offsetX - centerX;
+    dy = bubble.y + offsetY - centerY;
+
+    dist = sqrt(dx * dx + dy * dy);
+    double scale = 1 - (dist / 400);
+    scale = scale > 0 ? scale : 0;
+
+    return scale;
+  }
+
+   set offset(Offset offset) {
     setState(() {
       xViewPos = -offset.dx;
       yViewPos = -offset.dy;
@@ -132,11 +221,13 @@ class BubbleGridViewState extends State<BubbleGridView>
     return renderBox.size.width;
   }
 
+  //canvas.height
   double get containerHeight {
     RenderBox containerBox = _containerKey.currentContext.findRenderObject();
     return containerBox.size.height;
   }
 
+  //canvas.width
   double get containerWidth {
     RenderBox containerBox = _containerKey.currentContext.findRenderObject();
     return containerBox.size.width;
@@ -155,24 +246,24 @@ class BubbleGridViewState extends State<BubbleGridView>
 //      newXPosition = 0.0;
 //    } else
 
-//    if (-newXPosition + containerWidth > width) {
-//      newXPosition = containerWidth - width;
-//    }
+    if (-newXPosition + containerWidth > width) {
+      newXPosition = containerWidth - width;
+    }
 
 //    if (newYPosition > 0.0 || height < containerHeight) {
 //      newYPosition = 0.0;
 //    } else
 
-//    if (-newYPosition + containerHeight > height) {
-//      newYPosition = containerHeight - height;
-//    }
+    if (-newYPosition + containerHeight > height) {
+      newYPosition = containerHeight - height;
+    }
 
     setState(() {
       xViewPos = newXPosition;
       yViewPos = newYPosition;
     });
 
-    _sendScrollValues();
+//    _sendScrollValues();
   }
 
   void _handlePanUpdate(DragUpdateDetails details) {
@@ -207,7 +298,7 @@ class BubbleGridViewState extends State<BubbleGridView>
     xPos = position.dx;
     yPos = position.dy;
 
-    _sendScrollValues();
+//    _sendScrollValues();
   }
 
   void _handlePanDown(DragDownDetails details) {
@@ -245,128 +336,48 @@ class BubbleGridViewState extends State<BubbleGridView>
     }
   }
 
-  Container buildNewContainerRow(bool indent) {
-    return Container(
-        padding: indent ? const EdgeInsets.only(left: CircleButton.defaultSize / 2) : 0,
-        child: Row(
-          children: [],
-        )
-    );
-  }
-
-  void addChildToContainerRow(Container containerRow, Widget child) {
-    containerRow.child;
-  }
-
   @override
   Widget build(BuildContext context) {
-    //Always start with at least three rows where the middle row is the origin row
-    VerticalOriginList verticalOriginList = VerticalOriginList(originPositionKey: _positionedKey);
-
-    //Seed the origin row with a widget, this widget is the origin widget
-    verticalOriginList.originRow.add(_children[0]);
-
-    //Since we already seeded the origin, we'll handicap the loop so it doesn't
-    // over populate
-    int extraWidgetIndex = -2;
-
-    //Index of which row to add to
-    int cycleRowIndex = 0;
-
-    //Alternate where to add the next row
-    bool addRowToTop = true;
-
-    for (int i = 1; i < _children.length; i++) {
-      extraWidgetIndex++;
-
-      //Always add a widget
-      verticalOriginList.addToStack(cycleRowIndex ~/ 2, _children[i]);
-
-      //Cycle through the rows, multiplied by two since we always want
-      // two widgets per row
-      if (cycleRowIndex >= verticalOriginList.height * 2) {
-        cycleRowIndex = 0;
-      } else {
-        cycleRowIndex++;
-      }
-
-      //_children list might be empty after adding the first widget
-      if (_children.isNotEmpty) {
-        //Every fourth widget we need to add an additional row and widget to
-        // create a hex pattern with the rows
-        Tuple3<int, int, bool> extraWidgetIndexXaddRowToTop = addExtraWidgetIfNeeded(
-            extraWidgetIndex, i, addRowToTop, cycleRowIndex, verticalOriginList);
-
-        extraWidgetIndex = extraWidgetIndexXaddRowToTop.item1;
-        i = extraWidgetIndexXaddRowToTop.item2;
-        addRowToTop = extraWidgetIndexXaddRowToTop.item3;
-      }
-    }
-
     return new GestureDetector(
       onPanDown: _handlePanDown,
       onPanUpdate: _handlePanUpdate,
       onPanEnd: _handlePanEnd,
-      child: Column(
+      child: new Container(
           key: _containerKey,
-          children: verticalOriginList.buildStack
+          child: new Stack(
+            overflow: Overflow.visible,
+            children: _children.map((widget) {
+              return new Positioned(
+                //TODO: Need a positionKey for all (or only the center widget?) widgets. For now this only works with one widget
+                key: _positionedKey,
+                top: yViewPos,
+                left: xViewPos,
+                child: widget,
+              );
+            }).toList(),
+          )
       ),
     );
   }
+}
 
-  Tuple3<int, int, bool> addExtraWidgetIfNeeded(int extraWidgetIndex, int childIndex,
-      bool addRowToTop, int cycleRowIndex, VerticalOriginList verticalOriginList) {
-    //Every fourth widget we need to add an additional row and widget to
-    // create a hex pattern with the rows
-    if (extraWidgetIndex >= 4) {
+class BubbleButton extends CircleButton {
+  final GestureTapCallback onTap;
+  final String title;
+  double _x;
+  double _y;
 
-      //Add the extra bubble to a new row
-      if (addRowToTop) {
-        List<Widget> newRow = [];
-        newRow.add(_children[++childIndex]);
+  BubbleButton(x, y, {Key key, @required this.onTap, @required this.title}) : super(key: key, onTap: onTap, title: title);
 
-        //Add new row to the top
-        verticalOriginList.aboveChildren.add(newRow);
-      } else {
-        List<Widget> newRow = [];
-        newRow.add(_children[++childIndex]);
+  double get x => _x;
 
-        //Add new row to the bottom
-        verticalOriginList.belowChildren.add(newRow);
-      }
-
-      //Alternate where to add the next row
-      addRowToTop = !addRowToTop;
-
-      //Reset extraBubbleIndex to zero so we loop through this process as needed
-      extraWidgetIndex = 0;
-    }
-
-    return Tuple3<int, int, bool>(extraWidgetIndex, childIndex, addRowToTop);
+  set x(double value) {
+    _x = value;
   }
 
-//
-//  @override
-//  Widget build(BuildContext context) {
-//    return new GestureDetector(
-//      onPanDown: _handlePanDown,
-//      onPanUpdate: _handlePanUpdate,
-//      onPanEnd: _handlePanEnd,
-//      child: new Container(
-//          key: _containerKey,
-//          child: new Stack(
-//            overflow: Overflow.visible,
-//            children: _children.map((widget) {
-//              return new Positioned(
-//                //TODO: Need a positionKey for all (or only the center widget?) widgets. For now this only works with one widget
-//                key: _positionedKey,
-//                top: yViewPos,
-//                left: xViewPos,
-//                child: widget,
-//              );
-//            }).toList(),
-//          )
-//      ),
-//    );
-//  }
+  double get y => _y;
+
+  set y(double value) {
+    _y = value;
+  }
 }

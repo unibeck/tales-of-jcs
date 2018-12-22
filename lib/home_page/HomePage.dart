@@ -26,7 +26,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _bubbleGridView = new BubbleGridView(
       children: _buildWidgets(),
-      velocityFactor: 2.0,
+      velocityFactor: 0.16,
       scrollListener: (offset) {
         print("----------");
         print("new x and y scroll offset: " + offset.dx.toString() + " " + offset.dy.toString());
@@ -56,7 +56,7 @@ class _HomePageState extends State<HomePage> {
   List<CircleButton> _buildWidgets() {
     List<CircleButton> list = new List();
 
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 8; i++) {
       list.add(
         CircleButton(
           onTap: () {
