@@ -1,10 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:tales_of_jcs/utils/custom_widgets/HexRow.dart';
-import 'package:tales_of_jcs/utils/custom_widgets/VerticalOriginList.dart';
-
 import 'package:tuple/tuple.dart';
 
+import 'package:tales_of_jcs/utils/custom_widgets/VerticalOriginList.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/CircleButton.dart';
 
 class BubbleGridView extends StatefulWidget {
@@ -244,61 +242,59 @@ class BubbleGridViewState extends State<BubbleGridView>
     }
   }
 
-  Container buildNewContainerRow(bool indent) {
-    return Container(
-        padding: indent ? const EdgeInsets.only(left: CircleButton.defaultSize / 2) : 0,
-        child: Row(
-          children: [],
-        )
-    );
-  }
-
-  void addChildToContainerRow(Container containerRow, Widget child) {
-    containerRow.child;
-  }
-
   @override
   Widget build(BuildContext context) {
     //Always start with at least three rows where the middle row is the origin row
     VerticalOriginList verticalOriginList = VerticalOriginList();
+    int childrenIndex = 0;
 
     //Seed the origin row with a widget, this widget is the origin widget
-    verticalOriginList.originRow.add(_children[0]);
-
-    //Since we already seeded the origin, we'll handicap the loop so it doesn't
-    // over populate
-    int extraWidgetIndex = -2;
+    verticalOriginList.originRow.add(_children[childrenIndex++]);
 
     //Index of which row to add to
     int cycleRowIndex = 0;
 
     //Alternate where to add the next row
-    bool addRowToTop = true;
+    bool addRowToTop = false;
 
-    for (int i = 1; i < _children.length; i++) {
-      extraWidgetIndex++;
+    while (childrenIndex < _children.length) {
+      List<Widget> currentRowToAppendTo = verticalOriginList.stack[cycleRowIndex ~/ 2];
 
-      //Always add a widget
-      verticalOriginList.addToStack(cycleRowIndex ~/ 2, _children[i]);
+      if (currentRowToAppendTo != verticalOriginList.originRow) {
+        Tuple3<int, int, bool> childrenIndexXcycleRowIndex = addNewRowIfAppropriate(
+            childrenIndex, cycleRowIndex, addRowToTop, verticalOriginList);
 
-      //Cycle through the rows, multiplied by two since we always want
-      // two widgets per row
-      if (cycleRowIndex >= verticalOriginList.height * 2) {
-        cycleRowIndex = 0;
-      } else {
+        childrenIndex = childrenIndexXcycleRowIndex.item1;
+        cycleRowIndex = childrenIndexXcycleRowIndex.item2;
+        addRowToTop = childrenIndexXcycleRowIndex.item3;
+      }
+
+      //If we still have children left, then add a widget to currentRowToAppendTo
+      if (childrenIndex < _children.length) {
+        if (currentRowToAppendTo.length % 2 == 0) {
+          currentRowToAppendTo.insert(0, _children[childrenIndex++]);
+        } else {
+          currentRowToAppendTo.add(_children[childrenIndex++]);
+        }
+
         cycleRowIndex++;
       }
 
-      //_children list might be empty after adding the first widget
-      if (_children.isNotEmpty) {
-        //Every fourth widget we need to add an additional row and widget to
-        // create a hex pattern with the rows
-        Tuple3<int, int, bool> extraWidgetIndexXaddRowToTop = addExtraWidgetIfNeeded(
-            extraWidgetIndex, i, addRowToTop, cycleRowIndex, verticalOriginList);
+      //If we still have another child left, then add a widget to currentRowToAppendTo
+      if (childrenIndex < _children.length) {
+        if (currentRowToAppendTo .length % 2 == 0) {
+          currentRowToAppendTo.insert(0, _children[childrenIndex++]);
+        } else {
+          currentRowToAppendTo.add(_children[childrenIndex++]);
+        }
 
-        extraWidgetIndex = extraWidgetIndexXaddRowToTop.item1;
-        i = extraWidgetIndexXaddRowToTop.item2;
-        addRowToTop = extraWidgetIndexXaddRowToTop.item3;
+        cycleRowIndex++;
+      }
+
+      //Cycle through the rows, multiplied by two since we always want
+      // two widgets per row
+      if (cycleRowIndex >= verticalOriginList.stack.length * 2) {
+        cycleRowIndex = 0;
       }
     }
 
@@ -315,7 +311,7 @@ class BubbleGridViewState extends State<BubbleGridView>
                 top: yViewPos,
                 left: xViewPos,
                 child: Column(
-                    children: verticalOriginList.buildStack
+                    children: verticalOriginList.buildRowStack
                 ),
               )
             ],
@@ -324,34 +320,40 @@ class BubbleGridViewState extends State<BubbleGridView>
     );
   }
 
-  Tuple3<int, int, bool> addExtraWidgetIfNeeded(int extraWidgetIndex, int childIndex,
-      bool addRowToTop, int cycleRowIndex, VerticalOriginList verticalOriginList) {
-    //Every fourth widget we need to add an additional row and widget to
-    // create a hex pattern with the rows
-    if (extraWidgetIndex >= 4) {
+  Tuple3<int, int, bool> addNewRowIfAppropriate(int childrenIndex, int cycleRowIndex,
+      bool addRowToTop, VerticalOriginList verticalOriginList) {
+    if (verticalOriginList.stack[cycleRowIndex ~/ 2].length == 2) {
+      //Add an extra row with one widget if the row we're currently at has two widgets
 
-      //Add the extra bubble to a new row
-      if (addRowToTop) {
-        List<Widget> newRow = [];
-        newRow.add(_children[++childIndex]);
+      List<Widget> newRow = []..add(_children[childrenIndex++]);
+      addNewRowWithWidgets(newRow, addRowToTop, verticalOriginList);
 
-        //Add new row to the top
-        verticalOriginList.aboveChildren.add(newRow);
-      } else {
-        List<Widget> newRow = [];
-        newRow.add(_children[++childIndex]);
-
-        //Add new row to the bottom
-        verticalOriginList.belowChildren.add(newRow);
-      }
-
-      //Alternate where to add the next row
       addRowToTop = !addRowToTop;
+      cycleRowIndex += 2;
+    } else if (verticalOriginList.stack[cycleRowIndex ~/ 2].length == 3) {
+      //Add an extra row with at most two widgets if the row we're currently at has three widgets
 
-      //Reset extraBubbleIndex to zero so we loop through this process as needed
-      extraWidgetIndex = 0;
+      List<Widget> newRow = []..add(_children[childrenIndex++]);
+      if (childrenIndex < _children.length) {
+        newRow.add(_children[childrenIndex++]);
+      }
+      addNewRowWithWidgets(newRow, addRowToTop, verticalOriginList);
+
+      addRowToTop = !addRowToTop;
+      cycleRowIndex += 2;
     }
 
-    return Tuple3<int, int, bool>(extraWidgetIndex, childIndex, addRowToTop);
+    return Tuple3<int, int, bool>(childrenIndex, cycleRowIndex, addRowToTop);
+  }
+
+  void addNewRowWithWidgets(List<Widget> newRow, bool addRowToTop, VerticalOriginList verticalOriginList) {
+    //Add the extra bubble to a new row
+    if (addRowToTop) {
+      //Add new row to the top
+      verticalOriginList.addRowToAboveChildren(newRow);
+    } else {
+      //Add new row to the bottom
+      verticalOriginList.addRowToBelowChildren(newRow);
+    }
   }
 }
