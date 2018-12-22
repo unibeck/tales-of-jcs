@@ -261,7 +261,7 @@ class BubbleGridViewState extends State<BubbleGridView>
   @override
   Widget build(BuildContext context) {
     //Always start with at least three rows where the middle row is the origin row
-    VerticalOriginList verticalOriginList = VerticalOriginList(originPositionKey: _positionedKey);
+    VerticalOriginList verticalOriginList = VerticalOriginList();
 
     //Seed the origin row with a widget, this widget is the origin widget
     verticalOriginList.originRow.add(_children[0]);
@@ -307,10 +307,21 @@ class BubbleGridViewState extends State<BubbleGridView>
       onPanDown: _handlePanDown,
       onPanUpdate: _handlePanUpdate,
       onPanEnd: _handlePanEnd,
-      child: Column(
-          key: _containerKey,
-          children: verticalOriginList.buildStack
-      ),
+      child: Container(
+        key: _containerKey,
+        child: Stack(
+          children: <Widget>[
+            Positioned(
+              key: _positionedKey,
+              top: yViewPos,
+              left: xViewPos,
+              child: Column(
+                  children: verticalOriginList.buildStack
+              ),
+            )
+          ],
+        )
+      )
     );
   }
 
@@ -344,29 +355,4 @@ class BubbleGridViewState extends State<BubbleGridView>
 
     return Tuple3<int, int, bool>(extraWidgetIndex, childIndex, addRowToTop);
   }
-
-//
-//  @override
-//  Widget build(BuildContext context) {
-//    return new GestureDetector(
-//      onPanDown: _handlePanDown,
-//      onPanUpdate: _handlePanUpdate,
-//      onPanEnd: _handlePanEnd,
-//      child: new Container(
-//          key: _containerKey,
-//          child: new Stack(
-//            overflow: Overflow.visible,
-//            children: _children.map((widget) {
-//              return new Positioned(
-//                //TODO: Need a positionKey for all (or only the center widget?) widgets. For now this only works with one widget
-//                key: _positionedKey,
-//                top: yViewPos,
-//                left: xViewPos,
-//                child: widget,
-//              );
-//            }).toList(),
-//          )
-//      ),
-//    );
-//  }
 }

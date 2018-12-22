@@ -3,13 +3,11 @@ import 'package:tales_of_jcs/utils/IndexOutOfBoundsException.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/CircleButton.dart';
 
 class VerticalOriginList {
-  GlobalKey originPositionKey;
-
   List<List<Widget>> aboveChildren = [[]];
   List<Widget> originRow = [];
   List<List<Widget>> belowChildren = [[]];
 
-  VerticalOriginList({@required this.originPositionKey});
+  VerticalOriginList();
 
   //One List of all children and origin lists stacked from bottom (zeroth index)
   // to top (length of all children index)
@@ -24,7 +22,6 @@ class VerticalOriginList {
 
     stack.add(Container(
       child: Row(
-        key: originPositionKey,
         children: originRow,
       )
     ));
