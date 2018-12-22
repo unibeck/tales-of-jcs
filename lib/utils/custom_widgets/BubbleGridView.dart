@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter/material.dart';
+import 'package:tuple/tuple.dart';
+
+import 'package:tales_of_jcs/utils/custom_widgets/VerticalOriginList.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/CircleButton.dart';
 
 class BubbleGridView extends StatefulWidget {
@@ -150,17 +152,17 @@ class BubbleGridViewState extends State<BubbleGridView>
 //      newXPosition = 0.0;
 //    } else
 
-    if (-newXPosition + containerWidth > width) {
-      newXPosition = containerWidth - width;
-    }
+//    if (-newXPosition + containerWidth > width) {
+//      newXPosition = containerWidth - width;
+//    }
 
 //    if (newYPosition > 0.0 || height < containerHeight) {
 //      newYPosition = 0.0;
 //    } else
 
-    if (-newYPosition + containerHeight > height) {
-      newYPosition = containerHeight - height;
-    }
+//    if (-newYPosition + containerHeight > height) {
+//      newYPosition = containerHeight - height;
+//    }
 
     setState(() {
       xViewPos = newXPosition;
@@ -182,17 +184,17 @@ class BubbleGridViewState extends State<BubbleGridView>
 //      newXPosition = 0.0;
 //    } else
 
-    if (-newXPosition + containerWidth > width) {
-      newXPosition = containerWidth - width;
-    }
+//    if (-newXPosition + containerWidth > width) {
+//      newXPosition = containerWidth - width;
+//    }
 
 //    if (newYPosition > 0.0 || height < containerHeight) {
 //      newYPosition = 0.0;
 //    } else
 //
-    if (-newYPosition + containerHeight > height) {
-      newYPosition = containerHeight - height;
-    }
+//    if (-newYPosition + containerHeight > height) {
+//      newYPosition = containerHeight - height;
+//    }
 
     setState(() {
       xViewPos = newXPosition;
@@ -242,25 +244,116 @@ class BubbleGridViewState extends State<BubbleGridView>
 
   @override
   Widget build(BuildContext context) {
+    //Always start with at least three rows where the middle row is the origin row
+    VerticalOriginList verticalOriginList = VerticalOriginList();
+    int childrenIndex = 0;
+
+    //Seed the origin row with a widget, this widget is the origin widget
+    verticalOriginList.originRow.add(_children[childrenIndex++]);
+
+    //Index of which row to add to
+    int cycleRowIndex = 0;
+
+    //Alternate where to add the next row
+    bool addRowToTop = false;
+
+    while (childrenIndex < _children.length) {
+      List<Widget> currentRowToAppendTo = verticalOriginList.stack[cycleRowIndex ~/ 2];
+
+      if (currentRowToAppendTo != verticalOriginList.originRow) {
+        Tuple3<int, int, bool> childrenIndexXcycleRowIndex = addNewRowIfAppropriate(
+            childrenIndex, cycleRowIndex, addRowToTop, verticalOriginList);
+
+        childrenIndex = childrenIndexXcycleRowIndex.item1;
+        cycleRowIndex = childrenIndexXcycleRowIndex.item2;
+        addRowToTop = childrenIndexXcycleRowIndex.item3;
+      }
+
+      //If we still have children left, then add a widget to currentRowToAppendTo
+      if (childrenIndex < _children.length) {
+        if (currentRowToAppendTo.length % 2 == 0) {
+          currentRowToAppendTo.insert(0, _children[childrenIndex++]);
+        } else {
+          currentRowToAppendTo.add(_children[childrenIndex++]);
+        }
+
+        cycleRowIndex++;
+      }
+
+      //If we still have another child left, then add a widget to currentRowToAppendTo
+      if (childrenIndex < _children.length) {
+        if (currentRowToAppendTo .length % 2 == 0) {
+          currentRowToAppendTo.insert(0, _children[childrenIndex++]);
+        } else {
+          currentRowToAppendTo.add(_children[childrenIndex++]);
+        }
+
+        cycleRowIndex++;
+      }
+
+      //Cycle through the rows, multiplied by two since we always want
+      // two widgets per row
+      if (cycleRowIndex >= verticalOriginList.stack.length * 2) {
+        cycleRowIndex = 0;
+      }
+    }
+
     return new GestureDetector(
       onPanDown: _handlePanDown,
       onPanUpdate: _handlePanUpdate,
       onPanEnd: _handlePanEnd,
-      child: new Container(
+      child: Container(
           key: _containerKey,
-          child: new Stack(
-            overflow: Overflow.visible,
-            children: _children.map((widget) {
-              return new Positioned(
-                //TODO: Need a positionKey for all (or only the center widget?) widgets. For now this only works with one widget
+          child: Stack(
+            children: <Widget>[
+              Positioned(
                 key: _positionedKey,
                 top: yViewPos,
                 left: xViewPos,
-                child: widget,
-              );
-            }).toList(),
-          )
-      ),
+                child: Column(
+                    children: verticalOriginList.buildRowStack
+                ),
+              )
+            ],
+          ),
+      )
     );
+  }
+
+  Tuple3<int, int, bool> addNewRowIfAppropriate(int childrenIndex, int cycleRowIndex,
+      bool addRowToTop, VerticalOriginList verticalOriginList) {
+    if (verticalOriginList.stack[cycleRowIndex ~/ 2].length == 2) {
+      //Add an extra row with one widget if the row we're currently at has two widgets
+
+      List<Widget> newRow = []..add(_children[childrenIndex++]);
+      addNewRowWithWidgets(newRow, addRowToTop, verticalOriginList);
+
+      addRowToTop = !addRowToTop;
+      cycleRowIndex += 2;
+    } else if (verticalOriginList.stack[cycleRowIndex ~/ 2].length == 3) {
+      //Add an extra row with at most two widgets if the row we're currently at has three widgets
+
+      List<Widget> newRow = []..add(_children[childrenIndex++]);
+      if (childrenIndex < _children.length) {
+        newRow.add(_children[childrenIndex++]);
+      }
+      addNewRowWithWidgets(newRow, addRowToTop, verticalOriginList);
+
+      addRowToTop = !addRowToTop;
+      cycleRowIndex += 2;
+    }
+
+    return Tuple3<int, int, bool>(childrenIndex, cycleRowIndex, addRowToTop);
+  }
+
+  void addNewRowWithWidgets(List<Widget> newRow, bool addRowToTop, VerticalOriginList verticalOriginList) {
+    //Add the extra bubble to a new row
+    if (addRowToTop) {
+      //Add new row to the top
+      verticalOriginList.addRowToAboveChildren(newRow);
+    } else {
+      //Add new row to the bottom
+      verticalOriginList.addRowToBelowChildren(newRow);
+    }
   }
 }
