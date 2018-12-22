@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter/material.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/HexRow.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/VerticalOriginList.dart';
 
@@ -308,19 +307,19 @@ class BubbleGridViewState extends State<BubbleGridView>
       onPanUpdate: _handlePanUpdate,
       onPanEnd: _handlePanEnd,
       child: Container(
-        key: _containerKey,
-        child: Stack(
-          children: <Widget>[
-            Positioned(
-              key: _positionedKey,
-              top: yViewPos,
-              left: xViewPos,
-              child: Column(
-                  children: verticalOriginList.buildStack
-              ),
-            )
-          ],
-        )
+          key: _containerKey,
+          child: Stack(
+            children: <Widget>[
+              Positioned(
+                key: _positionedKey,
+                top: yViewPos,
+                left: xViewPos,
+                child: Column(
+                    children: verticalOriginList.buildStack
+                ),
+              )
+            ],
+          ),
       )
     );
   }

@@ -56,7 +56,7 @@ class _HomePageState extends State<HomePage> {
   List<CircleButton> _buildWidgets() {
     List<CircleButton> list = new List();
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
       list.add(
         CircleButton(
           onTap: () {

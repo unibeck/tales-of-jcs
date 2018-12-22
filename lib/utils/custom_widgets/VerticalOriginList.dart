@@ -28,18 +28,48 @@ class VerticalOriginList {
     ));
 
     for (int i = 0; i < aboveChildren.length; i++) {
+      EdgeInsets padding = EdgeInsets.zero;
+      if (i % 2 == 0 && aboveChildren[i].length % 2 == 1) {
+        padding = const EdgeInsets.only(left: CircleButton.defaultSize);
+      }
+
       stack.insert(0, Container(
-          padding: EdgeInsets.zero,
+//          decoration: BoxDecoration(
+//              color: Colors.white,
+//              border: Border.all(
+//                color: Colors.black,
+//                width: 2.0,
+//              )
+//          ),
+          padding: padding,
           child: Row(
+//            crossAxisAlignment: CrossAxisAlignment.start,
+//            mainAxisAlignment: MainAxisAlignment.start,
+//            mainAxisSize: MainAxisSize.max,
             children: aboveChildren[i],
           )
       ));
     }
 
     for (int i = 0; i < belowChildren.length; i++) {
+      EdgeInsets padding = EdgeInsets.zero;
+      if (i % 2 == 0 && belowChildren[i].length % 2 == 1) {
+        padding = const EdgeInsets.only(left: CircleButton.defaultSize);
+      }
+
       stack.insert(stack.length, Container(
-          padding: EdgeInsets.zero,
+//          decoration: BoxDecoration(
+//              color: Colors.white,
+//              border: Border.all(
+//                color: Colors.black,
+//                width: 2.0,
+//              )
+//          ),
+          padding: padding,
           child: Row(
+//            crossAxisAlignment: CrossAxisAlignment.start,
+//            mainAxisAlignment: MainAxisAlignment.start,
+//            mainAxisSize: MainAxisSize.max,
             children: belowChildren[i],
           )
       ));
@@ -78,11 +108,11 @@ class VerticalOriginList {
       } else {
         originRow.insert(0, widget);
       }
-    } else { //index < this.originIndexOnStack
-      if (belowChildren[rowIndex - this.originIndexOnStack - 1].length % 2 == 0) {
-        belowChildren[rowIndex - this.originIndexOnStack - 1].insert(0, widget);
+    } else { //rowIndex > this.originIndexOnStack
+      if (belowChildren[height - rowIndex - 1].length % 2 == 0) {
+        belowChildren[height - rowIndex - 1].insert(0, widget);
       } else {
-        belowChildren[rowIndex - this.originIndexOnStack - 1].add(widget);
+        belowChildren[height - rowIndex - 1].add(widget);
       }
     }
   }
