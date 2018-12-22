@@ -12,14 +12,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  BubbleGridView _bubbleGridView;
-  int _counter = 0;
+  final List<Widget> _children = [];
+  int _currentIndex = 0;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+  BubbleGridView _bubbleGridView;
 
   @override
   void initState() {
@@ -36,6 +32,16 @@ class _HomePageState extends State<HomePage> {
         print("----------");
       },
     );
+
+    _children.add(Center(child: _bubbleGridView));
+    _children.add(ListView(
+      children: <Widget>[
+        Text("Story 1"),
+        Text("Story 2"),
+        Text("Story 3"),
+      ],
+    ));
+    _children.add(Text("Add Screen"));
   }
 
   @override
@@ -45,10 +51,32 @@ class _HomePageState extends State<HomePage> {
         title: Text(widget.title),
         centerTitle: true,
       ),
-      body: new Center(
-        child: _bubbleGridView
+      body: _children[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        onTap: onTabTapped,
+        currentIndex: _currentIndex,
+        items: [
+          BottomNavigationBarItem(
+            icon: new Icon(Icons.bubble_chart),
+            title: new Text("Bubble View"),
+          ),
+          BottomNavigationBarItem(
+            icon: new Icon(Icons.list),
+            title: new Text("List View"),
+          ),
+          BottomNavigationBarItem(
+            icon: new Icon(Icons.add_circle),
+            title: new Text("Add Tale"),
+          ),
+        ],
       ),
     );
+  }
+
+  void onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
   }
 
   List<CircleButton> _buildWidgets() {
