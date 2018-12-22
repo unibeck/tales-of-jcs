@@ -21,14 +21,15 @@ class VerticalOriginList {
     List<Container> stack = [];
 
     stack.add(Container(
-      child: Row(
-        children: originRow,
+        padding: EdgeInsets.zero,
+        child: Row(
+          children: originRow,
       )
     ));
 
     for (int i = 0; i < aboveChildren.length; i++) {
       stack.insert(0, Container(
-          padding: i % 2 == 0 ? const EdgeInsets.only(left: CircleButton.defaultSize / 2) : EdgeInsets.zero,
+          padding: EdgeInsets.zero,
           child: Row(
             children: aboveChildren[i],
           )
@@ -37,7 +38,7 @@ class VerticalOriginList {
 
     for (int i = 0; i < belowChildren.length; i++) {
       stack.insert(stack.length, Container(
-          padding: i % 2 == 0 ? const EdgeInsets.only(left: CircleButton.defaultSize / 2) : EdgeInsets.zero,
+          padding: EdgeInsets.zero,
           child: Row(
             children: belowChildren[i],
           )
