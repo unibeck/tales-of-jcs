@@ -33,6 +33,7 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   final GlobalKey _positionedKey = new GlobalKey();
 
   List<T> _children;
+  double _hexChildWidgetSize = 0;
   double _velocityFactor = 1.0;
   ValueChanged<Offset> _scrollListener;
 
@@ -51,6 +52,7 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   _HexGridWidgetState(List<T> children, double velocityFactor,
       ValueChanged<Offset> scrollListener) {
     _children = children;
+    _hexChildWidgetSize = _children[0].size;
 
     if (velocityFactor != null) {
       this._velocityFactor = velocityFactor;
@@ -78,13 +80,29 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   @override
   void afterFirstLayout(BuildContext context) {
     //Take the center of the widget and center it to the center of the container
+    double containerWidth = this.containerWidth;
+    double containerHeight = this.containerHeight;
+    double width = this.width;
+    double height = this.height;
+
+    //When the rows are even that means the origin row is shifted up, and we
+    // have to adjust the offsets for that
+    double offsetForEvenRows = (height ~/ _hexChildWidgetSize) % 2 == 0
+        ? _hexChildWidgetSize / 2
+        : 0;
+
     double widgetXContainerWidthCenter = -((containerWidth / 2) - width / 2);
     double widgetXContainerHeightCenter = -((containerHeight / 2) - height / 2);
 
     xPos = widgetXContainerWidthCenter;
     yPos = widgetXContainerHeightCenter;
-    origin = Offset(widgetXContainerWidthCenter, widgetXContainerHeightCenter);
-    offset = origin;
+
+    origin = Offset(
+        (containerWidth / 2) - (_hexChildWidgetSize / 2),
+        (containerHeight / 2) - (_hexChildWidgetSize / 2) + _hexChildWidgetSize / 2);
+    offset = Offset(
+        widgetXContainerWidthCenter,
+        widgetXContainerHeightCenter - offsetForEvenRows);
   }
 
   set offset(Offset offset) {
@@ -125,8 +143,8 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   Tuple2<double, double> containPositionWithinContainer(double newXPosition, double newYPosition) {
     //Localize these aggregated values to prevent redundant queries and wasted CPU cycles
     double containerWidth = this.containerWidth;
-    double width = this.width;
     double containerHeight = this.containerHeight;
+    double width = this.width;
     double height = this.height;
 
     //Don't allow the left of the hex grid widget to exceed more than half way
@@ -247,6 +265,9 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
       onPanUpdate: _handlePanUpdate,
       onPanEnd: _handlePanEnd,
       child: Container(
+        decoration: BoxDecoration(
+            color: Colors.white,
+        ),
         key: _containerKey,
         child: Stack(
           children: <Widget>[
@@ -255,13 +276,6 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
               top: yViewPos,
               left: xViewPos,
               child: Container(
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(
-                      color: Colors.black,
-                      width: 2.0,
-                    )
-                ),
                 child: Column(
                   children: this.verticalOriginList.buildRowStack(origin)
                 ),

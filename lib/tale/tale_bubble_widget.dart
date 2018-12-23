@@ -77,10 +77,9 @@ class _TaleBubbleWidgetState extends State<TaleBubbleWidget> {
   void updateSize(GlobalKey key, double defaultSize, double minSize, Offset origin) {
     if (key?.currentContext != null) {
       final RenderBox referenceBox = key.currentContext.findRenderObject();
-      final Offset position = referenceBox.globalToLocal(Offset.zero);
+      final Offset position = referenceBox.globalToLocal(origin);
 
-      double distance = (position.distance - origin.distance).abs();
-      double scaledSize = defaultSize - (distance * _scaleFactor);
+      double scaledSize = defaultSize - (position.distance * _scaleFactor);
       size = max(scaledSize, minSize);
     }
   }
