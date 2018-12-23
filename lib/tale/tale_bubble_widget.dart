@@ -1,21 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:tales_of_jcs/tale/tale.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/hex_child_widget.dart';
 
-class CircleButton extends StatelessWidget {
-  static const double defaultSize = 128;
+class TaleBubbleWidget extends HexChildWidget {
 
-  final GestureTapCallback onTap;
-  final String title;
+  GestureTapCallback onTap;
+  String title;
 
-  const CircleButton({Key key, @required this.onTap, @required this.title}) : super(key: key);
+  TaleBubbleWidget({Key key, @required this.onTap, @required this.title})
+      :super(key: key);
+
+
+  TaleBubbleWidget.fromTale(Tale tale) {
+    onTap = () {}; //TODO
+    title = tale.title;
+  }
+
+  @override
+  double get size {
+    return 128;
+  }
 
   @override
   Widget build(BuildContext context) {
     return InkResponse(
       onTap: onTap,
       child: Container(
-        width: defaultSize,
-        height: defaultSize,
-//        padding: new EdgeInsets.all(5.0),
+        width: size,
+        height: size,
         decoration: BoxDecoration(
           color: Theme.of(context).accentColor,
           shape: BoxShape.circle,

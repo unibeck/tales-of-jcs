@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:tales_of_jcs/home_page/HomePage.dart';
-import 'package:tales_of_jcs/utils/PrimaryAppColor.dart';
+import 'package:tales_of_jcs/home_page/home_page.dart';
+import 'package:tales_of_jcs/utils/primary_app_color.dart';
 
 void main() {
   runApp(TalesOfJCSApp());
