@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
+import 'package:after_layout/after_layout.dart';
 
 import 'package:tales_of_jcs/utils/custom_widgets/vertical_origin_list.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hex_child_widget.dart';
@@ -12,11 +13,11 @@ class HexGridWidget<T extends HexChildWidget> extends StatefulWidget {
   final double velocityFactor;
   final ValueChanged<Offset> scrollListener;
 
-  HexGridWidgetState _state;
+  _HexGridWidgetState _state;
 
   @override
   State<StatefulWidget> createState() {
-    _state = new HexGridWidgetState(children, velocityFactor, scrollListener);
+    _state = new _HexGridWidgetState(children, velocityFactor, scrollListener);
     return _state;
   }
 
@@ -24,40 +25,10 @@ class HexGridWidget<T extends HexChildWidget> extends StatefulWidget {
   set offset(Offset offset) {
     _state.offset = offset;
   }
-
-  // x scroll offset of the overflowed widget
-  double get x {
-    return _state.x;
-  }
-
-  // x scroll offset of the overflowed widget
-  double get y {
-    return _state.y;
-  }
-
-  // height of the overflowed widget
-  double get height {
-    return _state.height;
-  }
-
-  // width of the overflowed widget
-  double get width {
-    return _state.width;
-  }
-
-  // height of the container that holds the overflowed widget
-  double get containerHeight {
-    return _state.containerHeight;
-  }
-
-  // width of the container that holds the overflowed widget
-  double get containerWidth {
-    return _state.containerWidth;
-  }
 }
 
-class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
-    with SingleTickerProviderStateMixin {
+class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
+    with SingleTickerProviderStateMixin, AfterLayoutMixin<HexGridWidget> {
   final GlobalKey _containerKey = new GlobalKey();
   final GlobalKey _positionedKey = new GlobalKey();
 
@@ -75,7 +46,7 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 
   bool _enableFling = false;
 
-  HexGridWidgetState(List<T> children, double velocityFactor,
+  _HexGridWidgetState(List<T> children, double velocityFactor,
       ValueChanged<Offset> scrollListener) {
     _children = children;
 
@@ -90,19 +61,27 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      //Take the center of the widget and center it to the center of the container
-      double widgetXContainerWidthCenter = -((containerWidth / 2) - width / 2);
-      double widgetXContainerHeightCenter = -((containerHeight / 2) - height / 2);
-
-      xPos = widgetXContainerWidthCenter;
-      yPos = widgetXContainerHeightCenter;
-      offset = new Offset(widgetXContainerWidthCenter, widgetXContainerHeightCenter);
-    });
-
     super.initState();
+
     _controller = new AnimationController(vsync: this)
       ..addListener(_handleFlingAnimation);
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void afterFirstLayout(BuildContext context) {
+    //Take the center of the widget and center it to the center of the container
+    double widgetXContainerWidthCenter = -((containerWidth / 2) - width / 2);
+    double widgetXContainerHeightCenter = -((containerHeight / 2) - height / 2);
+
+    xPos = widgetXContainerWidthCenter;
+    yPos = widgetXContainerHeightCenter;
+    offset = new Offset(widgetXContainerWidthCenter, widgetXContainerHeightCenter);
   }
 
   set offset(Offset offset) {
@@ -140,6 +119,40 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
     return containerBox.size.width;
   }
 
+  Tuple2<double, double> containPositionWithinContainer(double newXPosition, double newYPosition) {
+    //Localize these aggregated values to prevent redundant queries and wasted CPU cycles
+    double containerWidth = this.containerWidth;
+    double width = this.width;
+    double containerHeight = this.containerHeight;
+    double height = this.height;
+
+    //Don't allow the left of the hex grid widget to exceed more than half way
+    // right of the container height
+    if (newXPosition > containerWidth / 2) {
+      newXPosition = containerWidth / 2;
+    }
+
+    //Don't allow the right of the hex grid widget to exceed more than half way
+    // left of the container height
+    if (newXPosition < (containerWidth / 2) - width) {
+      newXPosition = (containerWidth / 2) - width;
+    }
+
+    //Don't allow the top of the hex grid widget to exceed more than half way
+    // down the container height
+    if (newYPosition > containerHeight / 2) {
+      newYPosition = containerHeight / 2;
+    }
+
+    //Don't allow the bottom of the hex grid widget to exceed more than half way
+    // up the container height
+    if (newYPosition < (containerHeight / 2) - height) {
+      newYPosition = (containerHeight / 2) - height;
+    }
+
+    return Tuple2<double, double>(newXPosition, newYPosition);
+  }
+
   void _handleFlingAnimation() {
     if (!_enableFling || _flingAnimation.value.dx.isNaN ||
         _flingAnimation.value.dy.isNaN) {
@@ -149,21 +162,11 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
     double newXPosition = xPos + _flingAnimation.value.dx;
     double newYPosition = yPos + _flingAnimation.value.dy;
 
-//    if (newXPosition > 0.0 || width < containerWidth) {
-//      newXPosition = 0.0;
-//    } else
+    Tuple2<double, double> newPositions = containPositionWithinContainer(
+        newXPosition, newYPosition);
 
-//    if (-newXPosition + containerWidth > width) {
-//      newXPosition = containerWidth - width;
-//    }
-
-//    if (newYPosition > 0.0 || height < containerHeight) {
-//      newYPosition = 0.0;
-//    } else
-
-//    if (-newYPosition + containerHeight > height) {
-//      newYPosition = containerHeight - height;
-//    }
+    newXPosition = newPositions.item1;
+    newYPosition = newPositions.item2;
 
     setState(() {
       xViewPos = newXPosition;
@@ -180,22 +183,11 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
     double newXPosition = xViewPos + (position.dx - xPos);
     double newYPosition = yViewPos + (position.dy - yPos);
 
+    Tuple2<double, double> newPositions = containPositionWithinContainer(
+        newXPosition, newYPosition);
 
-//    if (newXPosition > 0.0 || width < containerWidth) {
-//      newXPosition = 0.0;
-//    } else
-
-//    if (-newXPosition + containerWidth > width) {
-//      newXPosition = containerWidth - width;
-//    }
-
-//    if (newYPosition > 0.0 || height < containerHeight) {
-//      newYPosition = 0.0;
-//    } else
-//
-//    if (-newYPosition + containerHeight > height) {
-//      newYPosition = containerHeight - height;
-//    }
+    newXPosition = newPositions.item1;
+    newYPosition = newPositions.item2;
 
     setState(() {
       xViewPos = newXPosition;
@@ -301,18 +293,34 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
       onPanUpdate: _handlePanUpdate,
       onPanEnd: _handlePanEnd,
       child: Container(
-          key: _containerKey,
-          child: Stack(
-            children: <Widget>[
-              Positioned(
-                key: _positionedKey,
-                top: yViewPos,
-                left: xViewPos,
+        decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(
+              color: Colors.black,
+              width: 2.0,
+            )
+        ),
+        key: _containerKey,
+        child: Stack(
+          children: <Widget>[
+            Positioned(
+              key: _positionedKey,
+              top: yViewPos,
+              left: xViewPos,
+              child: Container(
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(
+                      color: Colors.black,
+                      width: 2.0,
+                    )
+                ),
                 child: Column(
-                    children: verticalOriginList.buildRowStack
+                  children: verticalOriginList.buildRowStack
                 ),
               )
-            ],
+            )
+          ],
           ),
       )
     );

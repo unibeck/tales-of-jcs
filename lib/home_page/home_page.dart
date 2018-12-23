@@ -28,15 +28,7 @@ class _HomePageState extends State<HomePage> {
       children: _taleService.tales.map((tale) {
         return TaleBubbleWidget.fromTale(tale);
       }).toList(),
-      velocityFactor: 0.3,
-      scrollListener: (offset) {
-        print("----------");
-        print("new x and y scroll offset: " + offset.dx.toString() + " " + offset.dy.toString());
-        print("x and y scroll offset getters: " + _bubbleGridView.x.toString() + " " + _bubbleGridView.y.toString());
-        print("height and width of overscrolled widget: " + _bubbleGridView.height.toString() + " " + _bubbleGridView.width.toString());
-        print("height and width of the container: " + _bubbleGridView.containerHeight.toString() + " " + _bubbleGridView.containerWidth.toString());
-        print("----------");
-      },
+      velocityFactor: 0.3
     );
 
     _children.add(Center(child: _bubbleGridView));
