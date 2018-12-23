@@ -40,11 +40,13 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   double yPos = 0.0;
   double xViewPos = 0.0;
   double yViewPos = 0.0;
+  Offset origin = Offset.zero;
 
   AnimationController _controller;
   Animation<Offset> _flingAnimation;
-
   bool _enableFling = false;
+
+  VerticalOriginList verticalOriginList;
 
   _HexGridWidgetState(List<T> children, double velocityFactor,
       ValueChanged<Offset> scrollListener) {
@@ -81,7 +83,8 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 
     xPos = widgetXContainerWidthCenter;
     yPos = widgetXContainerHeightCenter;
-    offset = new Offset(widgetXContainerWidthCenter, widgetXContainerHeightCenter);
+    origin = Offset(widgetXContainerWidthCenter, widgetXContainerHeightCenter);
+    offset = origin;
   }
 
   set offset(Offset offset) {
@@ -237,7 +240,47 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 
   @override
   Widget build(BuildContext context) {
-    //Always start with at least three rows where the middle row is the origin row
+    this.verticalOriginList = _buildVerticalOriginList();
+
+    return new GestureDetector(
+      onPanDown: _handlePanDown,
+      onPanUpdate: _handlePanUpdate,
+      onPanEnd: _handlePanEnd,
+      child: Container(
+        decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(
+              color: Colors.black,
+              width: 2.0,
+            )
+        ),
+        key: _containerKey,
+        child: Stack(
+          children: <Widget>[
+            Positioned(
+              key: _positionedKey,
+              top: yViewPos,
+              left: xViewPos,
+              child: Container(
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(
+                      color: Colors.black,
+                      width: 2.0,
+                    )
+                ),
+                child: Column(
+                  children: this.verticalOriginList.buildRowStack(origin)
+                ),
+              )
+            )
+          ],
+          ),
+      )
+    );
+  }
+
+  VerticalOriginList<T> _buildVerticalOriginList() {
     VerticalOriginList verticalOriginList = VerticalOriginList(_children[0]);
     int childrenIndex = 1;
 
@@ -251,7 +294,7 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
       List<T> currentRowToAppendTo = verticalOriginList.stack[cycleRowIndex ~/ 2];
 
       if (currentRowToAppendTo != verticalOriginList.originRow) {
-        Tuple3<int, int, bool> childrenIndexXcycleRowIndex = addNewRowIfAppropriate(
+        Tuple3<int, int, bool> childrenIndexXcycleRowIndex = _addNewRowIfAppropriate(
             childrenIndex, cycleRowIndex, addRowToTop, verticalOriginList);
 
         childrenIndex = childrenIndexXcycleRowIndex.item1;
@@ -288,51 +331,16 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
       }
     }
 
-    return new GestureDetector(
-      onPanDown: _handlePanDown,
-      onPanUpdate: _handlePanUpdate,
-      onPanEnd: _handlePanEnd,
-      child: Container(
-        decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(
-              color: Colors.black,
-              width: 2.0,
-            )
-        ),
-        key: _containerKey,
-        child: Stack(
-          children: <Widget>[
-            Positioned(
-              key: _positionedKey,
-              top: yViewPos,
-              left: xViewPos,
-              child: Container(
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(
-                      color: Colors.black,
-                      width: 2.0,
-                    )
-                ),
-                child: Column(
-                  children: verticalOriginList.buildRowStack
-                ),
-              )
-            )
-          ],
-          ),
-      )
-    );
+    return verticalOriginList;
   }
 
-  Tuple3<int, int, bool> addNewRowIfAppropriate(int childrenIndex, int cycleRowIndex,
+  Tuple3<int, int, bool> _addNewRowIfAppropriate(int childrenIndex, int cycleRowIndex,
       bool addRowToTop, VerticalOriginList verticalOriginList) {
     if (verticalOriginList.stack[cycleRowIndex ~/ 2].length == 2) {
       //Add an extra row with one widget if the row we're currently at has two widgets
 
       List<T> newRow = []..add(_children[childrenIndex++]);
-      addNewRowWithWidgets(newRow, addRowToTop, verticalOriginList);
+      _addNewRowWithWidgets(newRow, addRowToTop, verticalOriginList);
 
       addRowToTop = !addRowToTop;
       cycleRowIndex += 2;
@@ -343,7 +351,7 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
       if (childrenIndex < _children.length) {
         newRow.add(_children[childrenIndex++]);
       }
-      addNewRowWithWidgets(newRow, addRowToTop, verticalOriginList);
+      _addNewRowWithWidgets(newRow, addRowToTop, verticalOriginList);
 
       addRowToTop = !addRowToTop;
       cycleRowIndex += 2;
@@ -352,7 +360,7 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
     return Tuple3<int, int, bool>(childrenIndex, cycleRowIndex, addRowToTop);
   }
 
-  void addNewRowWithWidgets(List<T> newRow, bool addRowToTop, VerticalOriginList verticalOriginList) {
+  void _addNewRowWithWidgets(List<T> newRow, bool addRowToTop, VerticalOriginList verticalOriginList) {
     //Add the extra bubble to a new row
     if (addRowToTop) {
       //Add new row to the top

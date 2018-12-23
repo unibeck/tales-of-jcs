@@ -36,7 +36,7 @@ class VerticalOriginList<T extends HexChildWidget> {
     _stack.insert(0, row);
   }
 
-  List<Container> get buildRowStack {
+  List<Container> buildRowStack(Offset origin) {
     List<Container> rowStack = [];
 
     rowStack.add(Container(
@@ -44,7 +44,9 @@ class VerticalOriginList<T extends HexChildWidget> {
             ? EdgeInsets.only(left: _hexChildWidgetSize)
             : EdgeInsets.zero,
         child: Row(
-          children: originRow,
+          children: originRow.map((widget) {
+            return widget..updateSize(origin);
+          }).toList(),
       )
     ));
 
@@ -60,7 +62,9 @@ class VerticalOriginList<T extends HexChildWidget> {
       rowStack.insert(0, Container(
           padding: padding,
           child: Row(
-            children: aboveRows[i],
+            children: aboveRows[i].map((widget) {
+              return widget..updateSize(origin);
+            }).toList(),
           )
       ));
     }
@@ -77,7 +81,9 @@ class VerticalOriginList<T extends HexChildWidget> {
       rowStack.add(Container(
           padding: padding,
           child: Row(
-            children: belowRows[i],
+            children: belowRows[i].map((widget) {
+              return widget..updateSize(origin);
+            }).toList(),
           )
       ));
     }
