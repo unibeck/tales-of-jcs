@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
+import 'package:after_layout/after_layout.dart';
 
 import 'package:tales_of_jcs/utils/custom_widgets/vertical_origin_list.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hex_child_widget.dart';
@@ -12,11 +13,11 @@ class HexGridWidget<T extends HexChildWidget> extends StatefulWidget {
   final double velocityFactor;
   final ValueChanged<Offset> scrollListener;
 
-  HexGridWidgetState _state;
+  _HexGridWidgetState _state;
 
   @override
   State<StatefulWidget> createState() {
-    _state = new HexGridWidgetState(children, velocityFactor, scrollListener);
+    _state = new _HexGridWidgetState(children, velocityFactor, scrollListener);
     return _state;
   }
 
@@ -24,40 +25,10 @@ class HexGridWidget<T extends HexChildWidget> extends StatefulWidget {
   set offset(Offset offset) {
     _state.offset = offset;
   }
-
-  // x scroll offset of the overflowed widget
-  double get x {
-    return _state.x;
-  }
-
-  // x scroll offset of the overflowed widget
-  double get y {
-    return _state.y;
-  }
-
-  // height of the overflowed widget
-  double get height {
-    return _state.height;
-  }
-
-  // width of the overflowed widget
-  double get width {
-    return _state.width;
-  }
-
-  // height of the container that holds the overflowed widget
-  double get containerHeight {
-    return _state.containerHeight;
-  }
-
-  // width of the container that holds the overflowed widget
-  double get containerWidth {
-    return _state.containerWidth;
-  }
 }
 
-class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
-    with SingleTickerProviderStateMixin {
+class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
+    with SingleTickerProviderStateMixin, AfterLayoutMixin<HexGridWidget> {
   final GlobalKey _containerKey = new GlobalKey();
   final GlobalKey _positionedKey = new GlobalKey();
 
@@ -75,7 +46,7 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 
   bool _enableFling = false;
 
-  HexGridWidgetState(List<T> children, double velocityFactor,
+  _HexGridWidgetState(List<T> children, double velocityFactor,
       ValueChanged<Offset> scrollListener) {
     _children = children;
 
@@ -90,19 +61,27 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      //Take the center of the widget and center it to the center of the container
-      double widgetXContainerWidthCenter = -((containerWidth / 2) - width / 2);
-      double widgetXContainerHeightCenter = -((containerHeight / 2) - height / 2);
-
-      xPos = widgetXContainerWidthCenter;
-      yPos = widgetXContainerHeightCenter;
-      offset = new Offset(widgetXContainerWidthCenter, widgetXContainerHeightCenter);
-    });
-
     super.initState();
+
     _controller = new AnimationController(vsync: this)
       ..addListener(_handleFlingAnimation);
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void afterFirstLayout(BuildContext context) {
+    //Take the center of the widget and center it to the center of the container
+    double widgetXContainerWidthCenter = -((containerWidth / 2) - width / 2);
+    double widgetXContainerHeightCenter = -((containerHeight / 2) - height / 2);
+
+    xPos = widgetXContainerWidthCenter;
+    yPos = widgetXContainerHeightCenter;
+    offset = new Offset(widgetXContainerWidthCenter, widgetXContainerHeightCenter);
   }
 
   set offset(Offset offset) {
