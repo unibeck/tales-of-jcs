@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:tales_of_jcs/utils/custom_widgets/BubbleGridView.dart';
-import 'package:tales_of_jcs/utils/custom_widgets/CircleButton.dart';
+import 'package:tales_of_jcs/tale/tale_bubble_widget.dart';
+import 'package:tales_of_jcs/tale/tale_list_widget.dart';
+import 'package:tales_of_jcs/tale/tale_service.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/hex_grid_widget.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/hex_child_widget.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key, this.title}) : super(key: key);
@@ -15,13 +18,16 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _children = [];
   int _currentIndex = 0;
 
-  BubbleGridView _bubbleGridView;
+  HexGridWidget _bubbleGridView;
+  TaleService _taleService = TaleService();
 
   @override
   void initState() {
     super.initState();
-    _bubbleGridView = new BubbleGridView(
-      children: _buildWidgets(),
+    _bubbleGridView = HexGridWidget(
+      children: _taleService.tales.map((tale) {
+        return TaleBubbleWidget.fromTale(tale);
+      }).toList(),
       velocityFactor: 0.3,
       scrollListener: (offset) {
         print("----------");
@@ -34,12 +40,11 @@ class _HomePageState extends State<HomePage> {
     );
 
     _children.add(Center(child: _bubbleGridView));
-    _children.add(ListView(
-      children: <Widget>[
-        Text("Story 1"),
-        Text("Story 2"),
-        Text("Story 3"),
-      ],
+    _children.add(ListView.builder(
+        itemCount: _taleService.tales.length,
+        itemBuilder: (context, index) {
+          return TaleListWidget.fromTale(_taleService.tales[index]);
+        }
     ));
     _children.add(Text("Add Screen"));
   }
@@ -77,23 +82,5 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _currentIndex = index;
     });
-  }
-
-  List<CircleButton> _buildWidgets() {
-    List<CircleButton> list = new List();
-
-    for (int i = 0; i < 26; i++) {
-      list.add(
-        CircleButton(
-          onTap: () {
-            final snackBar = SnackBar(content: Text("You tapped bubble $i"));
-            Scaffold.of(context).showSnackBar(snackBar);
-          },
-          title: "Bubble $i",
-        ),
-      );
-    }
-
-    return list;
   }
 }

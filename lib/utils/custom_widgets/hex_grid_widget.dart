@@ -1,23 +1,22 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
 
-import 'package:tales_of_jcs/utils/custom_widgets/VerticalOriginList.dart';
-import 'package:tales_of_jcs/utils/custom_widgets/CircleButton.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/vertical_origin_list.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/hex_child_widget.dart';
 
-class BubbleGridView extends StatefulWidget {
-  BubbleGridView({@required this.children,
+class HexGridWidget<T extends HexChildWidget> extends StatefulWidget {
+  HexGridWidget({@required this.children,
     this.velocityFactor, this.scrollListener});
 
-  final List<CircleButton> children;
+  final List<T> children;
   final double velocityFactor;
   final ValueChanged<Offset> scrollListener;
 
-  BubbleGridViewState _state;
+  HexGridWidgetState _state;
 
   @override
   State<StatefulWidget> createState() {
-    _state = new BubbleGridViewState(children, velocityFactor, scrollListener);
+    _state = new HexGridWidgetState(children, velocityFactor, scrollListener);
     return _state;
   }
 
@@ -57,12 +56,12 @@ class BubbleGridView extends StatefulWidget {
   }
 }
 
-class BubbleGridViewState extends State<BubbleGridView>
+class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
     with SingleTickerProviderStateMixin {
   final GlobalKey _containerKey = new GlobalKey();
   final GlobalKey _positionedKey = new GlobalKey();
 
-  List<CircleButton> _children;
+  List<T> _children;
   double _velocityFactor = 1.0;
   ValueChanged<Offset> _scrollListener;
 
@@ -76,12 +75,14 @@ class BubbleGridViewState extends State<BubbleGridView>
 
   bool _enableFling = false;
 
-  BubbleGridViewState(List<CircleButton> children, double velocityFactor,
+  HexGridWidgetState(List<T> children, double velocityFactor,
       ValueChanged<Offset> scrollListener) {
     _children = children;
+
     if (velocityFactor != null) {
       this._velocityFactor = velocityFactor;
     }
+
     if (scrollListener != null) {
       _scrollListener = scrollListener;
     }
@@ -245,11 +246,8 @@ class BubbleGridViewState extends State<BubbleGridView>
   @override
   Widget build(BuildContext context) {
     //Always start with at least three rows where the middle row is the origin row
-    VerticalOriginList verticalOriginList = VerticalOriginList();
-    int childrenIndex = 0;
-
-    //Seed the origin row with a widget, this widget is the origin widget
-    verticalOriginList.originRow.add(_children[childrenIndex++]);
+    VerticalOriginList verticalOriginList = VerticalOriginList(_children[0]);
+    int childrenIndex = 1;
 
     //Index of which row to add to
     int cycleRowIndex = 0;
@@ -258,7 +256,7 @@ class BubbleGridViewState extends State<BubbleGridView>
     bool addRowToTop = false;
 
     while (childrenIndex < _children.length) {
-      List<Widget> currentRowToAppendTo = verticalOriginList.stack[cycleRowIndex ~/ 2];
+      List<T> currentRowToAppendTo = verticalOriginList.stack[cycleRowIndex ~/ 2];
 
       if (currentRowToAppendTo != verticalOriginList.originRow) {
         Tuple3<int, int, bool> childrenIndexXcycleRowIndex = addNewRowIfAppropriate(
@@ -325,7 +323,7 @@ class BubbleGridViewState extends State<BubbleGridView>
     if (verticalOriginList.stack[cycleRowIndex ~/ 2].length == 2) {
       //Add an extra row with one widget if the row we're currently at has two widgets
 
-      List<Widget> newRow = []..add(_children[childrenIndex++]);
+      List<T> newRow = []..add(_children[childrenIndex++]);
       addNewRowWithWidgets(newRow, addRowToTop, verticalOriginList);
 
       addRowToTop = !addRowToTop;
@@ -333,7 +331,7 @@ class BubbleGridViewState extends State<BubbleGridView>
     } else if (verticalOriginList.stack[cycleRowIndex ~/ 2].length == 3) {
       //Add an extra row with at most two widgets if the row we're currently at has three widgets
 
-      List<Widget> newRow = []..add(_children[childrenIndex++]);
+      List<T> newRow = []..add(_children[childrenIndex++]);
       if (childrenIndex < _children.length) {
         newRow.add(_children[childrenIndex++]);
       }
@@ -346,7 +344,7 @@ class BubbleGridViewState extends State<BubbleGridView>
     return Tuple3<int, int, bool>(childrenIndex, cycleRowIndex, addRowToTop);
   }
 
-  void addNewRowWithWidgets(List<Widget> newRow, bool addRowToTop, VerticalOriginList verticalOriginList) {
+  void addNewRowWithWidgets(List<T> newRow, bool addRowToTop, VerticalOriginList verticalOriginList) {
     //Add the extra bubble to a new row
     if (addRowToTop) {
       //Add new row to the top
