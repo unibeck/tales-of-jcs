@@ -141,16 +141,32 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   }
 
   Tuple2<double, double> containPositionWithinContainer(double newXPosition, double newYPosition) {
-    //TODO: Debugging purposes only, remove before production
+    //Localize these aggregated values to prevent redundant queries and wasted CPU cycles
+    double containerWidth = this.containerWidth;
+    double width = this.width;
     double containerHeight = this.containerHeight;
     double height = this.height;
 
-    //Don't allow for top of widget to exceed more than half way down the container height
+    //Don't allow the left of the hex grid widget to exceed more than half way
+    // right of the container height
+    if (newXPosition > containerWidth / 2) {
+      newXPosition = containerWidth / 2;
+    }
+
+    //Don't allow the right of the hex grid widget to exceed more than half way
+    // left of the container height
+    if (newXPosition < (containerWidth / 2) - width) {
+      newXPosition = (containerWidth / 2) - width;
+    }
+
+    //Don't allow the top of the hex grid widget to exceed more than half way
+    // down the container height
     if (newYPosition > containerHeight / 2) {
       newYPosition = containerHeight / 2;
     }
 
-    //Don't allow for bottom of widget to exceed more than half way up the container height
+    //Don't allow the bottom of the hex grid widget to exceed more than half way
+    // up the container height
     if (newYPosition < (containerHeight / 2) - height) {
       newYPosition = (containerHeight / 2) - height;
     }
@@ -167,23 +183,11 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
     double newXPosition = xPos + _flingAnimation.value.dx;
     double newYPosition = yPos + _flingAnimation.value.dy;
 
-//    if (newXPosition > 0.0 || width < containerWidth) {
-//      newXPosition = 0.0;
-//    } else
-
-//    if (-newXPosition + containerWidth > width) {
-//      newXPosition = containerWidth - width;
-//    }
-
     Tuple2<double, double> newPositions = containPositionWithinContainer(
         newXPosition, newYPosition);
 
     newXPosition = newPositions.item1;
     newYPosition = newPositions.item2;
-
-//    if (-newYPosition + containerHeight > height) {
-//      newYPosition = containerHeight - height;
-//    }
 
     setState(() {
       xViewPos = newXPosition;
@@ -200,25 +204,11 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
     double newXPosition = xViewPos + (position.dx - xPos);
     double newYPosition = yViewPos + (position.dy - yPos);
 
-
-//    if (newXPosition > 0.0 || width < containerWidth) {
-//      newXPosition = 0.0;
-//    } else
-
-//    if (-newXPosition + containerWidth > width) {
-//      newXPosition = containerWidth - width;
-//    }
-
     Tuple2<double, double> newPositions = containPositionWithinContainer(
         newXPosition, newYPosition);
 
     newXPosition = newPositions.item1;
     newYPosition = newPositions.item2;
-
-//
-//    if (-newYPosition + containerHeight > height) {
-//      newYPosition = containerHeight - height;
-//    }
 
     setState(() {
       xViewPos = newXPosition;
