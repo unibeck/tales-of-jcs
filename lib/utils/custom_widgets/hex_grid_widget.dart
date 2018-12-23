@@ -140,6 +140,24 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
     return containerBox.size.width;
   }
 
+  Tuple2<double, double> containPositionWithinContainer(double newXPosition, double newYPosition) {
+    //TODO: Debugging purposes only, remove before production
+    double containerHeight = this.containerHeight;
+    double height = this.height;
+
+    //Don't allow for top of widget to exceed more than half way down the container height
+    if (newYPosition > containerHeight / 2) {
+      newYPosition = containerHeight / 2;
+    }
+
+    //Don't allow for bottom of widget to exceed more than half way up the container height
+    if (newYPosition < (containerHeight / 2) - height) {
+      newYPosition = (containerHeight / 2) - height;
+    }
+
+    return Tuple2<double, double>(newXPosition, newYPosition);
+  }
+
   void _handleFlingAnimation() {
     if (!_enableFling || _flingAnimation.value.dx.isNaN ||
         _flingAnimation.value.dy.isNaN) {
@@ -157,9 +175,11 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 //      newXPosition = containerWidth - width;
 //    }
 
-//    if (newYPosition > 0.0 || height < containerHeight) {
-//      newYPosition = 0.0;
-//    } else
+    Tuple2<double, double> newPositions = containPositionWithinContainer(
+        newXPosition, newYPosition);
+
+    newXPosition = newPositions.item1;
+    newYPosition = newPositions.item2;
 
 //    if (-newYPosition + containerHeight > height) {
 //      newYPosition = containerHeight - height;
@@ -189,9 +209,12 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 //      newXPosition = containerWidth - width;
 //    }
 
-//    if (newYPosition > 0.0 || height < containerHeight) {
-//      newYPosition = 0.0;
-//    } else
+    Tuple2<double, double> newPositions = containPositionWithinContainer(
+        newXPosition, newYPosition);
+
+    newXPosition = newPositions.item1;
+    newYPosition = newPositions.item2;
+
 //
 //    if (-newYPosition + containerHeight > height) {
 //      newYPosition = containerHeight - height;
@@ -301,13 +324,13 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
       onPanUpdate: _handlePanUpdate,
       onPanEnd: _handlePanEnd,
       child: Container(
-//        decoration: BoxDecoration(
-//            color: Colors.white,
-//            border: Border.all(
-//              color: Colors.black,
-//              width: 2.0,
-//            )
-//        ),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(
+              color: Colors.black,
+              width: 2.0,
+            )
+        ),
         key: _containerKey,
         child: Stack(
           children: <Widget>[
@@ -316,13 +339,13 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
               top: yViewPos,
               left: xViewPos,
               child: Container(
-//                decoration: BoxDecoration(
-//                    color: Colors.white,
-//                    border: Border.all(
-//                      color: Colors.black,
-//                      width: 2.0,
-//                    )
-//                ),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(
+                      color: Colors.black,
+                      width: 2.0,
+                    )
+                ),
                 child: Column(
                   children: verticalOriginList.buildRowStack
                 ),
