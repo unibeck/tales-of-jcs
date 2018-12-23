@@ -301,18 +301,34 @@ class HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
       onPanUpdate: _handlePanUpdate,
       onPanEnd: _handlePanEnd,
       child: Container(
-          key: _containerKey,
-          child: Stack(
-            children: <Widget>[
-              Positioned(
-                key: _positionedKey,
-                top: yViewPos,
-                left: xViewPos,
+//        decoration: BoxDecoration(
+//            color: Colors.white,
+//            border: Border.all(
+//              color: Colors.black,
+//              width: 2.0,
+//            )
+//        ),
+        key: _containerKey,
+        child: Stack(
+          children: <Widget>[
+            Positioned(
+              key: _positionedKey,
+              top: yViewPos,
+              left: xViewPos,
+              child: Container(
+//                decoration: BoxDecoration(
+//                    color: Colors.white,
+//                    border: Border.all(
+//                      color: Colors.black,
+//                      width: 2.0,
+//                    )
+//                ),
                 child: Column(
-                    children: verticalOriginList.buildRowStack
+                  children: verticalOriginList.buildRowStack
                 ),
               )
-            ],
+            )
+          ],
           ),
       )
     );
