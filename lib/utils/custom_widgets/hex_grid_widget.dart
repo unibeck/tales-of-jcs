@@ -247,13 +247,6 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
       onPanUpdate: _handlePanUpdate,
       onPanEnd: _handlePanEnd,
       child: Container(
-        decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(
-              color: Colors.black,
-              width: 2.0,
-            )
-        ),
         key: _containerKey,
         child: Stack(
           children: <Widget>[

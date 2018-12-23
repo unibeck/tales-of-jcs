@@ -92,23 +92,33 @@ class _TaleBubbleWidgetState extends State<TaleBubbleWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return InkResponse(
-      onTap: widget.onTap,
-      child: Container(
-        width: _width,
-        height: _height,
-        decoration: BoxDecoration(
-          color: Theme.of(context).accentColor,
-          shape: BoxShape.circle,
-        ),
-        child: Center(
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.body1.copyWith(color: Colors.white),
+    return Container(
+//        decoration: BoxDecoration(
+//            color: Colors.white,
+//            border: Border.all(
+//              color: Colors.black,
+//              width: 2.0,
+//            )
+//        ),
+        padding: EdgeInsets.all((widget.size - _width) / 2),
+        child: InkResponse(
+          onTap: widget.onTap,
+          child: Container(
+            width: _width,
+            height: _height,
+            decoration: BoxDecoration(
+              color: Theme.of(context).accentColor,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.body1.copyWith(color: Colors.white),
+              ),
+            ),
           ),
-        ),
-      ),
+        )
     );
   }
 }
