@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:tales_of_jcs/tale/tale.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hex_child_widget.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/hexgrid.dart';
 
 class TaleBubbleWidget extends HexChildWidget {
 
@@ -11,6 +12,7 @@ class TaleBubbleWidget extends HexChildWidget {
   final double scaleFactor;
 
   _TaleBubbleWidgetState _state;
+  Hex hex;
 
   TaleBubbleWidget({this.scaleFactor = 0.25,
     @required this.onTap, @required this.title}) : super(key: GlobalKey());

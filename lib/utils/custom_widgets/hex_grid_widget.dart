@@ -1,8 +1,11 @@
+import 'dart:collection';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/hexgrid.dart';
 import 'package:tuple/tuple.dart';
 import 'package:after_layout/after_layout.dart';
 
-import 'package:tales_of_jcs/utils/custom_widgets/vertical_origin_list.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hex_child_widget.dart';
 
 class HexGridWidget<T extends HexChildWidget> extends StatefulWidget {
@@ -47,8 +50,6 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   Animation<Offset> _flingAnimation;
   bool _enableFling = false;
 
-  VerticalOriginList verticalOriginList;
-
   _HexGridWidgetState(List<T> children, double velocityFactor,
       ValueChanged<Offset> scrollListener) {
     _children = children;
@@ -87,22 +88,22 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 
     //When the rows are even that means the origin row is shifted up, and we
     // have to adjust the offsets for that
-    double offsetForEvenRows = (height ~/ _hexChildWidgetSize) % 2 == 0
-        ? _hexChildWidgetSize / 2
-        : 0;
+//    double offsetForEvenRows = (height ~/ _hexChildWidgetSize) % 2 == 0
+//        ? _hexChildWidgetSize / 2
+//        : 0;
 
-    double widgetXContainerWidthCenter = -((containerWidth / 2) - width / 2);
-    double widgetXContainerHeightCenter = -((containerHeight / 2) - height / 2);
-
-    xPos = widgetXContainerWidthCenter;
-    yPos = widgetXContainerHeightCenter;
+//    double widgetXContainerWidthCenter = -((containerWidth / 2) - width / 2);
+//    double widgetXContainerHeightCenter = -((containerHeight / 2) - height / 2);
+//
+//    xPos = widgetXContainerWidthCenter;
+//    yPos = widgetXContainerHeightCenter;
 
     origin = Offset(
         (containerWidth / 2) - (_hexChildWidgetSize / 2),
         (containerHeight / 2) - (_hexChildWidgetSize / 2) + _hexChildWidgetSize / 2);
-    offset = Offset(
-        widgetXContainerWidthCenter,
-        widgetXContainerHeightCenter - offsetForEvenRows);
+//    offset = Offset(
+//        widgetXContainerWidthCenter,
+//        widgetXContainerHeightCenter - offsetForEvenRows);
   }
 
   set offset(Offset offset) {
@@ -258,8 +259,6 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 
   @override
   Widget build(BuildContext context) {
-    this.verticalOriginList = _buildVerticalOriginList();
-
     return new GestureDetector(
       onPanDown: _handlePanDown,
       onPanUpdate: _handlePanUpdate,
@@ -270,111 +269,62 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
         ),
         key: _containerKey,
         child: Stack(
-          children: <Widget>[
-            Positioned(
-              key: _positionedKey,
-              top: yViewPos,
-              left: xViewPos,
-              child: Container(
-                child: Column(
-                  children: this.verticalOriginList.buildRowStack(origin)
-                ),
-              )
-            )
-          ],
-          ),
+          key: _positionedKey,
+          children: buildHexLayout(origin, _hexChildWidgetSize)
+        ),
       )
     );
   }
 
-  VerticalOriginList<T> _buildVerticalOriginList() {
-    VerticalOriginList verticalOriginList = VerticalOriginList(_children[0]);
-    int childrenIndex = 1;
+  List<Positioned> buildHexLayout(Offset origin, double hexSize) {
+    Layout hexLayout = Layout.orientFlat(
+        Point(hexSize, hexSize), Point(origin.dx, origin.dy)
+    );
 
-    //Index of which row to add to
-    int cycleRowIndex = 0;
+    Hex originHex = Hex(0, 0);
 
-    //Alternate where to add the next row
-    bool addRowToTop = false;
+    //Contains a set of unique widgets
+    HashSet<Positioned> hexSet = HashSet();
+    hexSet.add(createPositionWidgetForHex(
+        _children[0], Hex(0, 0), hexLayout));
 
-    while (childrenIndex < _children.length) {
-      List<T> currentRowToAppendTo = verticalOriginList.stack[cycleRowIndex ~/ 2];
+    //Contains a queue Hex to determine the children of next
+    Queue<Hex> parentHexQueue = Queue();
+    parentHexQueue.add(originHex);
 
-      if (currentRowToAppendTo != verticalOriginList.originRow) {
-        Tuple3<int, int, bool> childrenIndexXcycleRowIndex = _addNewRowIfAppropriate(
-            childrenIndex, cycleRowIndex, addRowToTop, verticalOriginList);
+    //Start at on since we already seeded the collections
+    for (int i = 1; i < _children.length; i++) {
+      Hex parentHex = parentHexQueue.removeFirst();
 
-        childrenIndex = childrenIndexXcycleRowIndex.item1;
-        cycleRowIndex = childrenIndexXcycleRowIndex.item2;
-        addRowToTop = childrenIndexXcycleRowIndex.item3;
-      }
-
-      //If we still have children left, then add a widget to currentRowToAppendTo
-      if (childrenIndex < _children.length) {
-        if (currentRowToAppendTo.length % 2 == 0) {
-          currentRowToAppendTo.insert(0, _children[childrenIndex++]);
-        } else {
-          currentRowToAppendTo.add(_children[childrenIndex++]);
+      for (int direction = 0; direction < Hex.directions.length; direction++) {
+        if (i >= _children.length) {
+          break;
         }
 
-        cycleRowIndex++;
-      }
+        Hex neighborHex = parentHex.neighbor(direction);
+        Positioned positionedHexWidget = createPositionWidgetForHex(
+            _children[i], neighborHex, hexLayout);
 
-      //If we still have another child left, then add a widget to currentRowToAppendTo
-      if (childrenIndex < _children.length) {
-        if (currentRowToAppendTo .length % 2 == 0) {
-          currentRowToAppendTo.insert(0, _children[childrenIndex++]);
-        } else {
-          currentRowToAppendTo.add(_children[childrenIndex++]);
+        if (!hexSet.contains(positionedHexWidget)) {
+          i++;
+          hexSet.add(positionedHexWidget);
+          parentHexQueue.add(neighborHex);
         }
-
-        cycleRowIndex++;
-      }
-
-      //Cycle through the rows, multiplied by two since we always want
-      // two widgets per row
-      if (cycleRowIndex >= verticalOriginList.stack.length * 2) {
-        cycleRowIndex = 0;
       }
     }
 
-    return verticalOriginList;
+    return hexSet.toList();
   }
 
-  Tuple3<int, int, bool> _addNewRowIfAppropriate(int childrenIndex, int cycleRowIndex,
-      bool addRowToTop, VerticalOriginList verticalOriginList) {
-    if (verticalOriginList.stack[cycleRowIndex ~/ 2].length == 2) {
-      //Add an extra row with one widget if the row we're currently at has two widgets
+  Positioned createPositionWidgetForHex(T hexWidget, Hex hex, Layout hexLayout) {
+    Point hexToPixel = hex.toPixel(hexLayout);
+    double xPos = hexToPixel.x;
+    double yPos = hexToPixel.y;
 
-      List<T> newRow = []..add(_children[childrenIndex++]);
-      _addNewRowWithWidgets(newRow, addRowToTop, verticalOriginList);
-
-      addRowToTop = !addRowToTop;
-      cycleRowIndex += 2;
-    } else if (verticalOriginList.stack[cycleRowIndex ~/ 2].length == 3) {
-      //Add an extra row with at most two widgets if the row we're currently at has three widgets
-
-      List<T> newRow = []..add(_children[childrenIndex++]);
-      if (childrenIndex < _children.length) {
-        newRow.add(_children[childrenIndex++]);
-      }
-      _addNewRowWithWidgets(newRow, addRowToTop, verticalOriginList);
-
-      addRowToTop = !addRowToTop;
-      cycleRowIndex += 2;
-    }
-
-    return Tuple3<int, int, bool>(childrenIndex, cycleRowIndex, addRowToTop);
-  }
-
-  void _addNewRowWithWidgets(List<T> newRow, bool addRowToTop, VerticalOriginList verticalOriginList) {
-    //Add the extra bubble to a new row
-    if (addRowToTop) {
-      //Add new row to the top
-      verticalOriginList.addRowToAboveChildren(newRow);
-    } else {
-      //Add new row to the bottom
-      verticalOriginList.addRowToBelowChildren(newRow);
-    }
+    return Positioned(
+        top: xPos,
+        left: yPos,
+        child: hexWidget
+    );
   }
 }
