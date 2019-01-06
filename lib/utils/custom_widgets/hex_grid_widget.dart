@@ -68,7 +68,7 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   void initState() {
     super.initState();
 
-    _controller = new AnimationController(vsync: this)
+    _controller = AnimationController(vsync: this)
       ..addListener(_handleFlingAnimation);
   }
 
@@ -270,23 +270,24 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
         key: _containerKey,
         child: Stack(
           key: _positionedKey,
-          children: buildHexLayout(origin, _hexChildWidgetSize)
+          children: buildHexLayout(
+              _hexChildWidgetSize, origin.dx + xViewPos, origin.dy + yViewPos
+          )
         ),
       )
     );
   }
 
-  List<Positioned> buildHexLayout(Offset origin, double hexSize) {
+  List<Positioned> buildHexLayout(double hexSize, double originX, double originY) {
     Layout hexLayout = Layout.orientFlat(
-        Point(hexSize, hexSize), Point(origin.dx, origin.dy)
+        Point(hexSize, hexSize), Point(originX, originY)
     );
 
     Hex originHex = Hex(0, 0);
 
-    //Contains a set of unique widgets
-    HashSet<Positioned> hexSet = HashSet();
-    hexSet.add(createPositionWidgetForHex(
-        _children[0], Hex(0, 0), hexLayout));
+    //Contains a set of unique widgets with preserved iteration order
+    LinkedHashSet<Positioned> hexSet = LinkedHashSet();
+    hexSet.add(createPositionWidgetForHex(_children[0], originHex, hexLayout));
 
     //Contains a queue Hex to determine the children of next
     Queue<Hex> parentHexQueue = Queue();

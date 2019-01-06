@@ -27,14 +27,12 @@ class Hex {
     return this + directions[direction];
   }
 
-  //TODO: Fix the return here?
-  // https://www.redblobgames.com/grids/hexagons/implementation.html#hex-to-pixel
   Point toPixel(Layout layout) {
     Orientation M = layout.orientation;
-    return Point(
-        (M.f0 * q + M.f1 * r) * layout.size.x,
-        (M.f2 * q + M.f3 * r) * layout.size.y
-    );
+    double x = (M.f0 * q + M.f1 * r) * layout.size.x;
+    double y = (M.f2 * q + M.f3 * r) * layout.size.y;
+
+    return Point(x + layout.origin.x, y + layout.origin.y);
   }
 
   Point cornerOffset(Layout layout, int corner) {
