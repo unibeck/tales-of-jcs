@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:tales_of_jcs/tale/tale_bubble_widget.dart';
+import 'package:tales_of_jcs/tale/tale_hex_widget_serializer.dart';
 import 'package:tales_of_jcs/tale/tale_list_widget.dart';
 import 'package:tales_of_jcs/tale/tale_service.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hex_grid_widget.dart';
-import 'package:tales_of_jcs/utils/custom_widgets/hex_child_widget.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key, this.title}) : super(key: key);
@@ -26,8 +26,9 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _bubbleGridView = HexGridWidget(
       children: _taleService.tales.map((tale) {
-        return TaleBubbleWidget.fromTale(tale);
+        return TaleHexWidgetSerializer(tale, 24, 128, 0.25);
       }).toList(),
+      hexWidgetSize: 128,
       velocityFactor: 0.3
     );
 
