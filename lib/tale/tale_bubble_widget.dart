@@ -14,8 +14,8 @@ class TaleBubbleWidget extends HexChildWidget {
   _TaleBubbleWidgetState _state;
   Hex hex;
 
-  TaleBubbleWidget({this.scaleFactor = 0.25,
-    @required this.onTap, @required this.title}) : super(key: GlobalKey());
+  TaleBubbleWidget({Key key, this.scaleFactor = 0.25,
+    @required this.onTap, @required this.title}) : super(key: key);
 
   TaleBubbleWidget.fromTale(Tale tale) : this(
       onTap: () {}, //TODO
@@ -24,7 +24,7 @@ class TaleBubbleWidget extends HexChildWidget {
 
   @override
   State<StatefulWidget> createState() {
-    _state = new _TaleBubbleWidgetState(size, scaleFactor, onTap, title);
+    _state = _TaleBubbleWidgetState(size, scaleFactor, onTap, title);
     return _state;
   }
 
@@ -39,8 +39,8 @@ class TaleBubbleWidget extends HexChildWidget {
   }
 
   @override
-  void updateSize(Offset origin) {
-    _state?.updateSize(this.key, this.size, this.minSize, origin);
+  void updateSize(double distanceFromOrigin) {
+    _state?.updateSize(this.size, this.minSize, distanceFromOrigin);
   }
 
   @override
@@ -76,14 +76,9 @@ class _TaleBubbleWidgetState extends State<TaleBubbleWidget> {
     });
   }
 
-  void updateSize(GlobalKey key, double defaultSize, double minSize, Offset origin) {
-    if (key?.currentContext != null) {
-      final RenderBox referenceBox = key.currentContext.findRenderObject();
-      final Offset position = referenceBox.globalToLocal(origin);
-
-      double scaledSize = defaultSize - (position.distance * _scaleFactor);
-      size = max(scaledSize, minSize);
-    }
+  void updateSize(double defaultSize, double minSize, double distanceFromOrigin) {
+    double scaledSize = defaultSize - (distanceFromOrigin * _scaleFactor);
+    size = max(scaledSize, minSize);
   }
 
   @override

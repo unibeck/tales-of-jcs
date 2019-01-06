@@ -20,7 +20,7 @@ abstract class HexChildWidget extends StatefulWidget {
   const HexChildWidget({Key key}) : super(key: key);
 
 
-  void updateSize(Offset origin);
+  void updateSize(double distanceFromOrigin);
 
 
   @override

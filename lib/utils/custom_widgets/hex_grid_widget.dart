@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/bubble_loader.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hexgrid.dart';
 import 'package:tuple/tuple.dart';
 import 'package:after_layout/after_layout.dart';
@@ -43,7 +44,9 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   double yPos = 0.0;
   double xViewPos = 0.0;
   double yViewPos = 0.0;
+  Point origin = Point(0.0, 0.0);
 
+  bool _isAfterFirstLayout = false;
   AnimationController _controller;
   ValueChanged<Offset> _scrollListener;
   Animation<Offset> _flingAnimation;
@@ -67,6 +70,8 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   void initState() {
     super.initState();
 
+    _isAfterFirstLayout = false;
+
     _controller = AnimationController(vsync: this)
       ..addListener(_handleFlingAnimation);
   }
@@ -80,15 +85,24 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 
   @override
   void afterFirstLayout(BuildContext context) {
-    //Take the center of the widget and center it to the center of the container
+    _isAfterFirstLayout = true;
+
     double containerWidth = this.containerWidth;
     double containerHeight = this.containerHeight;
-    double width = this.width;
-    double height = this.height;
 
-    offset = Offset(
+    //Determine the origin of the container. Since we'll be using origin w.r.t
+    // to the bounding boxes of the hex children, which are positioned by
+    // top and left values, we'll have to adjust by half of the widget size to
+    // get the technical origin.
+    origin = Point(
         (containerWidth / 2) - (_hexChildWidgetSize / 2),
         (containerHeight / 2) - (_hexChildWidgetSize / 2));
+
+    //Center the hex grid to origin. See comment above about adjusting for
+    // vertical center
+    offset = Offset(
+        origin.x,
+        origin.y);
   }
 
   set offset(Offset offset) {
@@ -176,6 +190,10 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   }
 
   void _handlePanUpdate(DragUpdateDetails details) {
+    if (!_isAfterFirstLayout) {
+      return;
+    }
+
     final RenderBox referenceBox = context.findRenderObject();
     Offset position = referenceBox.globalToLocal(details.globalPosition);
 
@@ -200,6 +218,10 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   }
 
   void _handlePanDown(DragDownDetails details) {
+    if (!_isAfterFirstLayout) {
+      return;
+    }
+
     _enableFling = false;
     final RenderBox referenceBox = context.findRenderObject();
     Offset position = referenceBox.globalToLocal(details.globalPosition);
@@ -209,6 +231,10 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   }
 
   void _handlePanEnd(DragEndDetails details) {
+    if (!_isAfterFirstLayout) {
+      return;
+    }
+
     final double magnitude = details.velocity.pixelsPerSecond.distance;
     final double velocity = magnitude / 1000;
 
@@ -230,42 +256,53 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 
   _sendScrollValues() {
     if (_scrollListener != null) {
-      _scrollListener(Offset(-xViewPos, -yViewPos));
+      _scrollListener(Offset(xViewPos, yViewPos));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return new GestureDetector(
-      onPanDown: _handlePanDown,
-      onPanUpdate: _handlePanUpdate,
-      onPanEnd: _handlePanEnd,
-      child: Container(
-        decoration: BoxDecoration(
+    Widget childToShow;
+//    if (!_isAfterFirstLayout) {
+//      childToShow = BubbleLoader();
+//    } else {
+      childToShow = Stack(
+        key: _positionedKey,
+        children: buildHexLayout(
+            Layout.getOrientFlatSizeFromSymmetricalSize(
+              //TODO: Abstract 2.5 to customizable parameter, denseFactor.
+              // Controls how close the widgets set next to each other. Note if
+              // denseFactor is greater than three then they will overlap
+                _hexChildWidgetSize / 3.25
+            ),
+            xViewPos, yViewPos
+        )
+      );
+//    }
+
+    return GestureDetector(
+        onPanDown: _handlePanDown,
+        onPanUpdate: _handlePanUpdate,
+        onPanEnd: _handlePanEnd,
+        child: Container(
+          decoration: BoxDecoration(
             color: Colors.white,
+//            border: Border.all(width: 2)
+          ),
+          key: _containerKey,
+          child: childToShow
         ),
-        key: _containerKey,
-        child: Stack(
-          key: _positionedKey,
-          children: buildHexLayout(
-              Layout.getOrientFlatSizeFromSymmetricalSize(
-                  _hexChildWidgetSize / 2.5
-              ),
-              xViewPos,
-              yViewPos
-          )
-        ),
-      )
     );
   }
 
-  List<Positioned> buildHexLayout(Point hexSize, double originX, double originY) {
+  List<Positioned> buildHexLayout(Point hexSize, double layoutOriginX, double layoutOriginY) {
     Hex originHex = Hex(0, 0);
-    Layout hexLayout = Layout.orientFlat(hexSize, Point(originY, originX));
+    _children[0].hex = originHex;
+    Layout hexLayout = Layout.orientFlat(hexSize, Point(layoutOriginY, layoutOriginX));
 
     //Contains a set of unique widgets with preserved iteration order
     LinkedHashSet<Positioned> hexSet = LinkedHashSet();
-    hexSet.add(createPositionWidgetForHex(_children[0], originHex, hexLayout));
+    hexSet.add(createPositionWidgetForHex(_children[0], hexLayout));
 
     //Contains a queue Hex to determine the children of next
     Queue<Hex> parentHexQueue = Queue();
@@ -281,8 +318,9 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
         }
 
         Hex neighborHex = parentHex.neighbor(direction);
+        _children[i].hex = neighborHex;
         Positioned positionedHexWidget = createPositionWidgetForHex(
-            _children[i], neighborHex, hexLayout);
+            _children[i], hexLayout);
 
         if (!hexSet.contains(positionedHexWidget)) {
           i++;
@@ -295,13 +333,17 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
     return hexSet.toList();
   }
 
-  Positioned createPositionWidgetForHex(T hexWidget, Hex hex, Layout hexLayout) {
-    Point hexToPixel = hex.toPixel(hexLayout);
+  Positioned createPositionWidgetForHex(T hexWidget, Layout hexLayout) {
+    final Point hexToPixel = hexWidget.hex.toPixel(hexLayout);
+    final Point reflectedOrigin = Point(origin.y, origin.x);
+    final double distance = hexToPixel.distanceTo(reflectedOrigin);
 
     return Positioned(
         top: hexToPixel.x,
         left: hexToPixel.y,
-        child: hexWidget
+//        width: size,
+//        height: size,
+        child: hexWidget..updateSize(distance)
     );
   }
 }
