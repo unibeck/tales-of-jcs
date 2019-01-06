@@ -152,4 +152,17 @@ class Layout {
         orientation = new Orientation(
             3.0 / 2.0, 0.0, sqrt(3.0) / 2.0, sqrt(3.0),
             2.0 / 3.0, 0.0, -1.0 / 3.0, sqrt(3.0) / 3.0, 0.0);
+
+
+  ///Use the following methods to get the respective hexagon size of a symmetric
+  /// shape such as a circle or square, given the orientation.
+  /// https://www.redblobgames.com/grids/hexagons/#size-and-spacing
+
+  static Point getOrientPointySizeFromSymmetricalSize(double size) {
+    return Point(sqrt(3.0) * size, 2 * size);
+  }
+
+  static Point getOrientFlatSizeFromSymmetricalSize(double size) {
+    return Point(2 * size, sqrt(3.0) * size);
+  }
 }

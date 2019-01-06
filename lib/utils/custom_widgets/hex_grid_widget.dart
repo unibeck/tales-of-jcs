@@ -20,7 +20,7 @@ class HexGridWidget<T extends HexChildWidget> extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    _state = new _HexGridWidgetState(children, velocityFactor, scrollListener);
+    _state = _HexGridWidgetState(children, velocityFactor, scrollListener);
     return _state;
   }
 
@@ -32,21 +32,20 @@ class HexGridWidget<T extends HexChildWidget> extends StatefulWidget {
 
 class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
     with SingleTickerProviderStateMixin, AfterLayoutMixin<HexGridWidget> {
-  final GlobalKey _containerKey = new GlobalKey();
-  final GlobalKey _positionedKey = new GlobalKey();
+  final GlobalKey _containerKey = GlobalKey();
+  final GlobalKey _positionedKey = GlobalKey();
 
   List<T> _children;
   double _hexChildWidgetSize = 0;
   double _velocityFactor = 1.0;
-  ValueChanged<Offset> _scrollListener;
 
   double xPos = 0.0;
   double yPos = 0.0;
   double xViewPos = 0.0;
   double yViewPos = 0.0;
-  Offset origin = Offset.zero;
 
   AnimationController _controller;
+  ValueChanged<Offset> _scrollListener;
   Animation<Offset> _flingAnimation;
   bool _enableFling = false;
 
@@ -56,7 +55,7 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
     _hexChildWidgetSize = _children[0].size;
 
     if (velocityFactor != null) {
-      this._velocityFactor = velocityFactor;
+      _velocityFactor = velocityFactor;
     }
 
     if (scrollListener != null) {
@@ -75,6 +74,7 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
   @override
   void dispose() {
     _controller?.dispose();
+
     super.dispose();
   }
 
@@ -86,39 +86,16 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
     double width = this.width;
     double height = this.height;
 
-    //When the rows are even that means the origin row is shifted up, and we
-    // have to adjust the offsets for that
-//    double offsetForEvenRows = (height ~/ _hexChildWidgetSize) % 2 == 0
-//        ? _hexChildWidgetSize / 2
-//        : 0;
-
-//    double widgetXContainerWidthCenter = -((containerWidth / 2) - width / 2);
-//    double widgetXContainerHeightCenter = -((containerHeight / 2) - height / 2);
-//
-//    xPos = widgetXContainerWidthCenter;
-//    yPos = widgetXContainerHeightCenter;
-
-    origin = Offset(
+    offset = Offset(
         (containerWidth / 2) - (_hexChildWidgetSize / 2),
-        (containerHeight / 2) - (_hexChildWidgetSize / 2) + _hexChildWidgetSize / 2);
-//    offset = Offset(
-//        widgetXContainerWidthCenter,
-//        widgetXContainerHeightCenter - offsetForEvenRows);
+        (containerHeight / 2) - (_hexChildWidgetSize / 2));
   }
 
   set offset(Offset offset) {
     setState(() {
-      xViewPos = -offset.dx;
-      yViewPos = -offset.dy;
+      xViewPos = offset.dx;
+      yViewPos = offset.dy;
     });
-  }
-
-  double get x {
-    return -xViewPos;
-  }
-
-  double get y {
-    return -yViewPos;
   }
 
   double get height {
@@ -242,8 +219,8 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
     yPos = yViewPos;
 
     _enableFling = true;
-    _flingAnimation = new Tween<Offset>(
-        begin: new Offset(0.0, 0.0),
+    _flingAnimation = Tween<Offset>(
+        begin: Offset(0.0, 0.0),
         end: direction * distance * _velocityFactor
     ).animate(_controller);
     _controller
@@ -253,7 +230,7 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 
   _sendScrollValues() {
     if (_scrollListener != null) {
-      _scrollListener(new Offset(-xViewPos, -yViewPos));
+      _scrollListener(Offset(-xViewPos, -yViewPos));
     }
   }
 
@@ -271,19 +248,20 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
         child: Stack(
           key: _positionedKey,
           children: buildHexLayout(
-              _hexChildWidgetSize, origin.dx + xViewPos, origin.dy + yViewPos
+              Layout.getOrientFlatSizeFromSymmetricalSize(
+                  _hexChildWidgetSize / 2.5
+              ),
+              xViewPos,
+              yViewPos
           )
         ),
       )
     );
   }
 
-  List<Positioned> buildHexLayout(double hexSize, double originX, double originY) {
-    Layout hexLayout = Layout.orientFlat(
-        Point(hexSize, hexSize), Point(originX, originY)
-    );
-
+  List<Positioned> buildHexLayout(Point hexSize, double originX, double originY) {
     Hex originHex = Hex(0, 0);
+    Layout hexLayout = Layout.orientFlat(hexSize, Point(originY, originX));
 
     //Contains a set of unique widgets with preserved iteration order
     LinkedHashSet<Positioned> hexSet = LinkedHashSet();
@@ -319,12 +297,10 @@ class _HexGridWidgetState<T extends HexChildWidget> extends State<HexGridWidget>
 
   Positioned createPositionWidgetForHex(T hexWidget, Hex hex, Layout hexLayout) {
     Point hexToPixel = hex.toPixel(hexLayout);
-    double xPos = hexToPixel.x;
-    double yPos = hexToPixel.y;
 
     return Positioned(
-        top: xPos,
-        left: yPos,
+        top: hexToPixel.x,
+        left: hexToPixel.y,
         child: hexWidget
     );
   }
