@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:tales_of_jcs/tale/tale_bubble_widget.dart';
-import 'package:tales_of_jcs/tale/tale_hex_widget_serializer.dart';
+import 'package:tales_of_jcs/tale/tale_hex_grid_child.dart';
 import 'package:tales_of_jcs/tale/tale_list_widget.dart';
 import 'package:tales_of_jcs/tale/tale_service.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/hex_grid_context.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hex_grid_widget.dart';
 
 class HomePage extends StatefulWidget {
@@ -15,6 +15,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final double _minHexWidgetSize = 24;
+  final double _maxHexWidgetSize = 128;
+  final double _scaleFactor = 0.25;
+  final double _densityFactor = 3.25;
+
   final List<Widget> _children = [];
   int _currentIndex = 0;
 
@@ -26,9 +31,11 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _bubbleGridView = HexGridWidget(
       children: _taleService.tales.map((tale) {
-        return TaleHexWidgetSerializer(tale, 24, 128, 0.25);
+        return TaleHexGridChild(tale: tale, onTap: () {});
       }).toList(),
-      hexWidgetSize: 128,
+      hexGridContext: HexGridContext(
+          _minHexWidgetSize, _maxHexWidgetSize, _scaleFactor, _densityFactor
+      ),
       velocityFactor: 0.3
     );
 

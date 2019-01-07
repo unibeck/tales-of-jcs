@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:tales_of_jcs/tale/tale.dart';
 
 class TaleBubbleWidget extends StatelessWidget {
 
   final GestureTapCallback onTap;
-  final String title;
+  final Tale tale;
   final double size;
   final double maxSize;
 
   TaleBubbleWidget({
-    @required this.onTap, @required this.title,
+    @required this.onTap, @required this.tale,
     @required this.size, @required this.maxSize});
 
   @override
@@ -26,7 +27,7 @@ class TaleBubbleWidget extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                title,
+                tale.title,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.body1.copyWith(color: Colors.white),
               ),
