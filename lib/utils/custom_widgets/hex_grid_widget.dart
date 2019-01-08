@@ -291,51 +291,49 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
         ),
     );
   }
-
-  //TODO: Potentially use https://www.redblobgames.com/grids/hexagons/#rings-spiral as
-  // a better algorithm to layout in a spiral manner
+  
   List<Positioned> buildHexLayout(Point hexSize, double layoutOriginX, double layoutOriginY) {
     Hex originHex = Hex(0, 0);
     Hex furthestHex = originHex;
     Layout hexLayout = Layout
         .orientFlat(hexSize, Point(layoutOriginY, layoutOriginX));
 
-    //Contains a set of unique widgets with preserved iteration order
-    LinkedHashSet<Positioned> hexSet = LinkedHashSet();
-    hexSet.add(createPositionWidgetForHex(
+
+    List<Positioned> hexList = [];
+    hexList.add(createPositionWidgetForHex(
         _children[0], originHex, hexLayout));
 
-    //Contains a queue Hex to determine the children of next suitable Hex
-    Queue<Hex> parentHexQueue = Queue();
-    parentHexQueue.add(originHex);
-
     //Start at one since we already seeded the origin
-    for (int i = 1; i < _children.length; i++) {
-      Hex parentHex = parentHexQueue.removeFirst();
+    int radius = 1;
+    int i = 1;
+    Hex neighborHex = originHex;
+
+    while (i < _children.length) {
+      neighborHex = neighborHex.neighbor(0);
 
       for (int direction = 0; direction < Hex.directions.length; direction++) {
-        if (i >= _children.length) {
-          break;
-        }
+        for (int r = 0; r < radius; r++) {
+          if (i >= _children.length) {
+            break;
+          }
 
-        Hex neighborHex = parentHex.neighbor(direction);
-        Positioned positionedHexWidget = createPositionWidgetForHex(
-            _children[i], neighborHex, hexLayout);
-
-        if (!hexSet.contains(positionedHexWidget)) {
-          i++;
-          hexSet.add(positionedHexWidget);
-          parentHexQueue.add(neighborHex);
-
-          //The last hex we add will always be the furthest one from the origin
+          hexList.add(createPositionWidgetForHex(
+              _children[i], neighborHex, hexLayout));
+          neighborHex = neighborHex.neighbor((direction + 2) % 6);
           furthestHex = neighborHex;
+          i++;
         }
       }
+
+      radius++;
     }
 
+    //TODO: (?) Might not need this anymore since we have the radius from using
+    // the new spiral out addition algorithm.
     _calculateRadius(furthestHex, hexLayout);
 
-    return hexSet.toList();
+    //TODO: (?) Calculating this list should only need to be done once per_children state change
+    return hexList;
   }
 
   Positioned createPositionWidgetForHex(T hexGridChild, Hex hex, Layout hexLayout) {
