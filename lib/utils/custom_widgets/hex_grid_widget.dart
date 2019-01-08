@@ -42,6 +42,7 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
 
   HexGridContext _hexGridContext;
   List<T> _children;
+  double _hexLayoutRadius;
 
   double xPos = 0.0;
   double yPos = 0.0;
@@ -103,9 +104,7 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
         (containerHeight / 2) - (_hexGridContext.maxSize / 2));
 
     //Center the hex grid to origin
-    offset = Offset(
-        origin.x,
-        origin.y);
+    offset = Offset(origin.x, origin.y);
   }
 
   set offset(Offset offset) {
@@ -135,35 +134,34 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
     return containerBox.size.width;
   }
 
+  ///Ensures we will always have widgets visible
   Tuple2<double, double> containPositionWithinContainer(double newXPosition, double newYPosition) {
     //Localize these aggregated values to prevent redundant queries and wasted CPU cycles
     double containerWidth = this.containerWidth;
     double containerHeight = this.containerHeight;
-    double width = this.width;
-    double height = this.height;
 
-    //Don't allow the left of the hex grid widget to exceed more than half way
-    // right of the container height
-    if (newXPosition > containerWidth / 2) {
-      newXPosition = containerWidth / 2;
+    //Don't allow the right of the hex grid widget to exceed pass the left half
+    // of the container
+    if (newXPosition < (containerWidth / 2) - _hexLayoutRadius - (_hexGridContext.maxSize)) {
+      newXPosition = (containerWidth / 2) - _hexLayoutRadius - (_hexGridContext.maxSize);
     }
 
-    //Don't allow the right of the hex grid widget to exceed more than half way
-    // left of the container height
-    if (newXPosition < (containerWidth / 2) - width) {
-      newXPosition = (containerWidth / 2) - width;
+    //Don't allow the left of the hex grid widget to exceed pass the right half
+    // of the container
+    if (newXPosition > (containerWidth / 2) + _hexLayoutRadius) {
+      newXPosition = (containerWidth / 2) + _hexLayoutRadius;
     }
 
-    //Don't allow the top of the hex grid widget to exceed more than half way
-    // down the container height
-    if (newYPosition > containerHeight / 2) {
-      newYPosition = containerHeight / 2;
+    //Don't allow the bottom of the hex grid widget to exceed pass the top half
+    // of the container
+    if (newYPosition < (containerHeight / 2) - _hexLayoutRadius - (_hexGridContext.maxSize)) {
+      newYPosition = (containerHeight / 2) - _hexLayoutRadius - (_hexGridContext.maxSize);
     }
 
-    //Don't allow the bottom of the hex grid widget to exceed more than half way
-    // up the container height
-    if (newYPosition < (containerHeight / 2) - height) {
-      newYPosition = (containerHeight / 2) - height;
+    //Don't allow the top of the hex grid widget to exceed pass the bottom half
+    // of the container
+    if (newYPosition > (containerHeight / 2) + _hexLayoutRadius) {
+      newYPosition = (containerHeight / 2) + _hexLayoutRadius;
     }
 
     return Tuple2<double, double>(newXPosition, newYPosition);
@@ -294,16 +292,20 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
     );
   }
 
+  //TODO: Potentially use https://www.redblobgames.com/grids/hexagons/#rings-spiral as
+  // a better algorithm to layout in a spiral manner
   List<Positioned> buildHexLayout(Point hexSize, double layoutOriginX, double layoutOriginY) {
     Hex originHex = Hex(0, 0);
-    Layout hexLayout = Layout.orientFlat(hexSize, Point(layoutOriginY, layoutOriginX));
+    Hex furthestHex = originHex;
+    Layout hexLayout = Layout
+        .orientFlat(hexSize, Point(layoutOriginY, layoutOriginX));
 
     //Contains a set of unique widgets with preserved iteration order
     LinkedHashSet<Positioned> hexSet = LinkedHashSet();
     hexSet.add(createPositionWidgetForHex(
         _children[0], originHex, hexLayout));
 
-    //Contains a queue Hex to determine the children of next
+    //Contains a queue Hex to determine the children of next suitable Hex
     Queue<Hex> parentHexQueue = Queue();
     parentHexQueue.add(originHex);
 
@@ -324,9 +326,14 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
           i++;
           hexSet.add(positionedHexWidget);
           parentHexQueue.add(neighborHex);
+
+          //The last hex we add will always be the furthest one from the origin
+          furthestHex = neighborHex;
         }
       }
     }
+
+    _calculateRadius(furthestHex, hexLayout);
 
     return hexSet.toList();
   }
@@ -342,5 +349,15 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
         left: hexToPixel.y,
         child: hexGridChild.toHexWidget(_hexGridContext, size)
     );
+  }
+
+  void _calculateRadius(Hex furthestHex, Layout hexLayout) {
+    final Point hexToPixel = furthestHex.toPixel(hexLayout);
+    final Point reflectedOrigin = Point(hexLayout.origin.x, hexLayout.origin.y);
+    final double distance = hexToPixel.distanceTo(reflectedOrigin);
+
+    //Always allow some play since the furthestHex might be the origin,
+    // thus a distance of 0 which wouldn't be any fun
+    _hexLayoutRadius = max(distance, _hexGridContext.maxSize / 2);
   }
 }
