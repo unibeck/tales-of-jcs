@@ -288,15 +288,21 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
   }
 
   List<Positioned> _buildHexWidgets(double hexSize, double layoutOriginX, double layoutOriginY) {
-    Layout hexLayout = Layout.orientFlat(
+    Layout flatLayout = Layout.orientFlat(
         Point(hexSize, hexSize), Point(layoutOriginY, layoutOriginX)
     );
-
     List<Positioned> hexWidgetList = [];
 
+    final double containerWidth = this.containerWidth;
+    final double containerHeight = this.containerHeight;
+
     for (int i = 0; i < _hexLayout.length; i++) {
-      hexWidgetList.add(_createPositionWidgetForHex(
-          _children[i], _hexLayout[i], hexLayout));
+      Positioned hexWidget = _createPositionWidgetForHex(
+          _children[i], _hexLayout[i], flatLayout, containerWidth, containerHeight);
+
+      if (hexWidget != null) {
+        hexWidgetList.add(hexWidget);
+      }
     }
 
     return hexWidgetList;
@@ -335,15 +341,37 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
     return hexList;
   }
 
-  Positioned _createPositionWidgetForHex(T hexGridChild, Hex hex, Layout hexLayout) {
+  ///Only return a [Positioned] if the widget will be visible, otherwise return
+  /// null so we don't waste CPU cycles on rendering something that's not visible
+  /// NOTE: As with the rest of a Hex grid, the x and y coordinates are reflected
+  Positioned _createPositionWidgetForHex(T hexGridChild, Hex hex,
+      Layout hexLayout, double containerWidth, double containerHeight) {
     final Point hexToPixel = hex.toPixel(hexLayout);
+
+    //If the right of the hex exceeds pass the left border of the container
+    if (hexToPixel.y + _hexGridContext.maxSize < 0) {
+      return null;
+    }
+
+    //If the left of the hex exceeds pass the right border of the container
+    if (hexToPixel.y - _hexGridContext.maxSize > containerWidth) {
+      return null;
+    }
+
+    //If the bottom of the hex exceeds pass the top border of the container
+    if (hexToPixel.x + _hexGridContext.maxSize < 0) {
+      return null;
+    }
+
+    //If the top of the hex exceeds pass the bottom border of the container
+    if (hexToPixel.x - _hexGridContext.maxSize > containerHeight) {
+      return null;
+    }
+
     final Point reflectedOrigin = Point(origin.y, origin.x);
     final double distance = hexToPixel.distanceTo(reflectedOrigin);
     final double size = hexGridChild.getScaledSize(_hexGridContext, distance);
 
-    //TODO: (?) Might not need to show this if the widget is out of view. This
-    // could be determined with the x and y, the max width, and the
-    // container width and height
     return Positioned(
         top: hexToPixel.x,
         left: hexToPixel.y,

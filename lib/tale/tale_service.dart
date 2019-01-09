@@ -22,7 +22,7 @@ class TaleService {
     int max = 5;
     Random rnd = Random();
 
-    for (int i = 0; i < 11; i++) {
+    for (int i = 0; i < 126; i++) {
       _tales.add(
           Tale("Tale $i", "This is a story of a girl...", testUser,
               TaleRating(min + (max - min) * rnd.nextDouble(), testUser),
