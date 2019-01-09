@@ -17,8 +17,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final double _minHexWidgetSize = 24;
   final double _maxHexWidgetSize = 128;
-  final double _scaleFactor = 0.25;
-  final double _densityFactor = 3.25;
+  final double _scaleFactor = 0.15;
+  final double _densityFactor = 1.75;
+  final double _velocityFactor = 0.3;
 
   final List<Widget> _children = [];
   int _currentIndex = 0;
@@ -33,10 +34,9 @@ class _HomePageState extends State<HomePage> {
       children: _taleService.tales.map((tale) {
         return TaleHexGridChild(tale: tale, onTap: () {});
       }).toList(),
-      hexGridContext: HexGridContext(
-          _minHexWidgetSize, _maxHexWidgetSize, _scaleFactor, _densityFactor
-      ),
-      velocityFactor: 0.3
+      hexGridContext: HexGridContext(_minHexWidgetSize, _maxHexWidgetSize,
+          _scaleFactor, _densityFactor, _velocityFactor
+      )
     );
 
     _children.add(Center(child: _bubbleGridView));
