@@ -37,12 +37,18 @@ class HexGridWidget<T extends HexGridChild> extends StatefulWidget {
 class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
     with SingleTickerProviderStateMixin, AfterLayoutMixin<HexGridWidget> {
   final GlobalKey _containerKey = GlobalKey();
-  final GlobalKey _positionedKey = GlobalKey();
+
+  //TODO: Use a widget instead of boolean. This widget will be used as a loader
+  // widget and will be drawn when not null. If it is null then render the hex
+  // grid even as it calculates the containers size. Thus the widget won't be
+  // required and will always be set to null in [afterFirstLayout] to the hex
+  // grid widget can render instead
   bool _isAfterFirstLayout = false;
 
   HexGridContext _hexGridContext;
   List<T> _children;
-  double _hexLayoutRadius;
+  List<Hex> _hexLayout;
+  double _hexLayoutRadius = 0.0;
 
   double xPos = 0.0;
   double yPos = 0.0;
@@ -61,6 +67,7 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
       double velocityFactor, ValueChanged<Offset> scrollListener) {
     _hexGridContext = hexGridContext;
     _children = children;
+    _hexLayout = _buildHexLayout();
 
     if (velocityFactor != null) {
       _velocityFactor = velocityFactor;
@@ -92,8 +99,8 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
   void afterFirstLayout(BuildContext context) {
     _isAfterFirstLayout = true;
 
-    double containerWidth = this.containerWidth;
-    double containerHeight = this.containerHeight;
+    final double containerWidth = this.containerWidth;
+    final double containerHeight = this.containerHeight;
 
     //Determine the origin of the container. Since we'll be using origin w.r.t
     // to the bounding boxes of the hex children, which are positioned by
@@ -114,14 +121,11 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
     });
   }
 
-  double get height {
-    RenderBox renderBox = _positionedKey.currentContext.findRenderObject();
-    return renderBox.size.height;
-  }
-
-  double get width {
-    RenderBox renderBox = _positionedKey.currentContext.findRenderObject();
-    return renderBox.size.width;
+  set children(List<T> children) {
+    setState(() {
+      _children = children;
+      _hexLayout = _buildHexLayout();
+    });
   }
 
   double get containerHeight {
@@ -135,10 +139,10 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
   }
 
   ///Ensures we will always have widgets visible
-  Tuple2<double, double> containPositionWithinContainer(double newXPosition, double newYPosition) {
+  Tuple2<double, double> _confineHexGridWithinContainer(double newXPosition, double newYPosition) {
     //Localize these aggregated values to prevent redundant queries and wasted CPU cycles
-    double containerWidth = this.containerWidth;
-    double containerHeight = this.containerHeight;
+    final double containerWidth = this.containerWidth;
+    final double containerHeight = this.containerHeight;
 
     //Don't allow the right of the hex grid widget to exceed pass the left half
     // of the container
@@ -176,7 +180,7 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
     double newXPosition = xPos + _flingAnimation.value.dx;
     double newYPosition = yPos + _flingAnimation.value.dy;
 
-    Tuple2<double, double> newPositions = containPositionWithinContainer(
+    Tuple2<double, double> newPositions = _confineHexGridWithinContainer(
         newXPosition, newYPosition);
 
     newXPosition = newPositions.item1;
@@ -196,12 +200,12 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
     }
 
     final RenderBox referenceBox = context.findRenderObject();
-    Offset position = referenceBox.globalToLocal(details.globalPosition);
+    final Offset position = referenceBox.globalToLocal(details.globalPosition);
 
     double newXPosition = xViewPos + (position.dx - xPos);
     double newYPosition = yViewPos + (position.dy - yPos);
 
-    Tuple2<double, double> newPositions = containPositionWithinContainer(
+    Tuple2<double, double> newPositions = _confineHexGridWithinContainer(
         newXPosition, newYPosition);
 
     newXPosition = newPositions.item1;
@@ -225,7 +229,7 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
 
     _enableFling = false;
     final RenderBox referenceBox = context.findRenderObject();
-    Offset position = referenceBox.globalToLocal(details.globalPosition);
+    final Offset position = referenceBox.globalToLocal(details.globalPosition);
 
     xPos = position.dx;
     yPos = position.dy;
@@ -268,8 +272,7 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
       childToShow = BubbleLoader();
     } else {
       childToShow = Stack(
-        key: _positionedKey,
-        children: buildHexLayout(
+        children: _buildHexWidgets(
             Layout.getOrientFlatSizeFromSymmetricalSize(
                 _hexGridContext.maxSize / _hexGridContext.densityFactor
             ),
@@ -291,17 +294,26 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
         ),
     );
   }
-  
-  List<Positioned> buildHexLayout(Point hexSize, double layoutOriginX, double layoutOriginY) {
-    Hex originHex = Hex(0, 0);
-    Hex furthestHex = originHex;
+
+  List<Positioned> _buildHexWidgets(Point hexSize, double layoutOriginX, double layoutOriginY) {
     Layout hexLayout = Layout
         .orientFlat(hexSize, Point(layoutOriginY, layoutOriginX));
 
+    List<Positioned> hexWidgetList = [];
 
-    List<Positioned> hexList = [];
-    hexList.add(createPositionWidgetForHex(
-        _children[0], originHex, hexLayout));
+    for (int i = 0; i < _hexLayout.length; i++) {
+      hexWidgetList.add(_createPositionWidgetForHex(
+          _children[i], _hexLayout[i], hexLayout));
+    }
+
+    return hexWidgetList;
+  }
+
+  List<Hex> _buildHexLayout() {
+    Hex originHex = Hex(0, 0);
+
+    List<Hex> hexList = [];
+    hexList.add(originHex);
 
     //Start at one since we already seeded the origin
     int radius = 1;
@@ -317,10 +329,8 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
             break;
           }
 
-          hexList.add(createPositionWidgetForHex(
-              _children[i], neighborHex, hexLayout));
+          hexList.add(neighborHex);
           neighborHex = neighborHex.neighbor((direction + 2) % 6);
-          furthestHex = neighborHex;
           i++;
         }
       }
@@ -328,20 +338,18 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
       radius++;
     }
 
-    //TODO: (?) Might not need this anymore since we have the radius from using
-    // the new spiral out addition algorithm.
-    _calculateRadius(furthestHex, hexLayout);
-
-    //TODO: (?) Calculating this list should only need to be done once per_children state change
     return hexList;
   }
 
-  Positioned createPositionWidgetForHex(T hexGridChild, Hex hex, Layout hexLayout) {
+  Positioned _createPositionWidgetForHex(T hexGridChild, Hex hex, Layout hexLayout) {
     final Point hexToPixel = hex.toPixel(hexLayout);
     final Point reflectedOrigin = Point(origin.y, origin.x);
     final double distance = hexToPixel.distanceTo(reflectedOrigin);
     final double size = hexGridChild.getScaledSize(_hexGridContext, distance);
 
+    //TODO: (?) Might not need to show this if the widget is out of view. This
+    // could be determined with the x and y, the max width, and the
+    // container width and height
     return Positioned(
         top: hexToPixel.x,
         left: hexToPixel.y,
