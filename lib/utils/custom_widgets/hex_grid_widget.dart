@@ -134,32 +134,28 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
 
   ///Ensures we will always have hex widgets visible
   Tuple2<double, double> _confineHexGridWithinContainer(double newXPosition, double newYPosition) {
-    //Localize these aggregated values to prevent redundant queries and wasted CPU cycles
-    final double containerWidth = this.containerWidth;
-    final double containerHeight = this.containerHeight;
-
     //Don't allow the right of the hex grid widget to exceed pass the left half
     // of the container
-    if (newXPosition < (containerWidth / 2) - _hexLayoutRadius - (_hexGridContext.maxSize)) {
-      newXPosition = (containerWidth / 2) - _hexLayoutRadius - (_hexGridContext.maxSize);
+    if (newXPosition < origin.x - _hexLayoutRadius) {
+      newXPosition = origin.x - _hexLayoutRadius;
     }
 
     //Don't allow the left of the hex grid widget to exceed pass the right half
     // of the container
-    if (newXPosition > (containerWidth / 2) + _hexLayoutRadius) {
-      newXPosition = (containerWidth / 2) + _hexLayoutRadius;
+    if (newXPosition > origin.x + _hexLayoutRadius) {
+      newXPosition = origin.x + _hexLayoutRadius;
     }
 
     //Don't allow the bottom of the hex grid widget to exceed pass the top half
     // of the container
-    if (newYPosition < (containerHeight / 2) - _hexLayoutRadius - (_hexGridContext.maxSize)) {
-      newYPosition = (containerHeight / 2) - _hexLayoutRadius - (_hexGridContext.maxSize);
+    if (newYPosition < origin.y - _hexLayoutRadius) {
+      newYPosition = origin.y - _hexLayoutRadius;
     }
 
     //Don't allow the top of the hex grid widget to exceed pass the bottom half
     // of the container
-    if (newYPosition > (containerHeight / 2) + _hexLayoutRadius) {
-      newYPosition = (containerHeight / 2) + _hexLayoutRadius;
+    if (newYPosition > origin.y + _hexLayoutRadius) {
+      newYPosition = origin.y + _hexLayoutRadius;
     }
 
     return Tuple2<double, double>(newXPosition, newYPosition);
@@ -306,19 +302,30 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
     }
     
     if (_hexLayout.isNotEmpty) {
-      final Point originHexToPixel= _hexLayout[0].hex.toPixel(flatLayout);
+      final Point originHexToPixel= _hexLayout.first.hex.toPixel(flatLayout);
 
-      if (originHexToPixel.y > origin.x + _hexGridContext.maxSize ||
-          originHexToPixel.y < origin.x - _hexGridContext.maxSize ||
-          originHexToPixel.x > origin.y + _hexGridContext.maxSize ||
-          originHexToPixel.x < origin.y - _hexGridContext.maxSize) {
+      _hexLayoutRadius = originHexToPixel.distanceTo(
+          _hexLayout.last.hex.toPixel(flatLayout));
+
+      if (originHexToPixel.y > origin.x + _hexGridContext.maxSize / 2 ||
+          originHexToPixel.y < origin.x - _hexGridContext.maxSize / 2 ||
+          originHexToPixel.x > origin.y + _hexGridContext.maxSize / 2 ||
+          originHexToPixel.x < origin.y - _hexGridContext.maxSize / 2) {
 
         hexWidgetList.add(Align(
             alignment: Alignment.bottomCenter,
-            child: RaisedButton(
-                child: Text("Center"),
-                onPressed: () => _centerHexLayout(),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0))
+            child: Padding(
+                padding: EdgeInsets.only(bottom: 16),
+                child: RaisedButton(
+                    child: Text("Center"),
+                    elevation: 4,
+                    color: Theme.of(context).accentColor,
+                    textColor: Colors.white,
+                    onPressed: () => _centerHexLayout(),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(32.0)
+                    )
+                )
             )
         ));
       }
@@ -356,7 +363,6 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
       radius++;
     }
 
-    _hexLayoutRadius = radius * _hexGridContext.maxSize / _hexGridContext.densityFactor;
     return hexList;
   }
 
