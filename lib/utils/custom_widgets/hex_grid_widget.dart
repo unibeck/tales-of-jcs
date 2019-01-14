@@ -266,10 +266,10 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
       childToShow = BubbleLoader();
     } else {
       childToShow = Stack(
-        children: _buildHexWidgets(
-            _hexGridContext.maxSize / _hexGridContext.densityFactor,
-            xViewPos, yViewPos
-        )
+          children: _buildHexWidgets(
+              _hexGridContext.maxSize / _hexGridContext.densityFactor,
+              xViewPos, yViewPos
+          )
       );
     }
 
@@ -287,11 +287,11 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
     );
   }
 
-  List<Positioned> _buildHexWidgets(double hexSize, double layoutOriginX, double layoutOriginY) {
+  List<Widget> _buildHexWidgets(double hexSize, double layoutOriginX, double layoutOriginY) {
     Layout flatLayout = Layout.orientFlat(
         Point(hexSize, hexSize), Point(layoutOriginY, layoutOriginX)
     );
-    List<Positioned> hexWidgetList = [];
+    List<Widget> hexWidgetList = [];
 
     final double containerWidth = this.containerWidth;
     final double containerHeight = this.containerHeight;
@@ -302,6 +302,25 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
 
       if (hexWidget != null) {
         hexWidgetList.add(hexWidget);
+      }
+    }
+    
+    if (_hexLayout.isNotEmpty) {
+      final Point originHexToPixel= _hexLayout[0].toPixel(flatLayout);
+
+      if (originHexToPixel.y > origin.x + _hexGridContext.maxSize ||
+          originHexToPixel.y < origin.x - _hexGridContext.maxSize ||
+          originHexToPixel.x > origin.y + _hexGridContext.maxSize ||
+          originHexToPixel.x < origin.y - _hexGridContext.maxSize) {
+
+        hexWidgetList.add(Align(
+            alignment: Alignment.bottomCenter,
+            child: RaisedButton(
+                child: Text("Center"),
+                onPressed: () => _centerHexLayout(),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0))
+            )
+        ));
       }
     }
 
@@ -377,5 +396,9 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
         left: hexToPixel.y,
         child: hexGridChild.toHexWidget(_hexGridContext, size)
     );
+  }
+
+  void _centerHexLayout() {
+    offset = Offset(origin.x, origin.y);
   }
 }
