@@ -124,6 +124,15 @@ class Hex {
   }
 }
 
+class UIHex {
+
+  UIHex(this.hex, {this.radius});
+
+  final Hex hex;
+  int radius;
+
+}
+
 class Orientation {
   final double f0, f1, f2, f3;
   final double b0, b1, b2, b3;

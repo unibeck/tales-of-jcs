@@ -46,7 +46,7 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
 
   HexGridContext _hexGridContext;
   List<T> _children;
-  List<Hex> _hexLayout;
+  List<UIHex> _hexLayout;
   double _hexLayoutRadius = 0.0;
 
   double xPos = 0.0;
@@ -306,7 +306,7 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
     }
     
     if (_hexLayout.isNotEmpty) {
-      final Point originHexToPixel= _hexLayout[0].toPixel(flatLayout);
+      final Point originHexToPixel= _hexLayout[0].hex.toPixel(flatLayout);
 
       if (originHexToPixel.y > origin.x + _hexGridContext.maxSize ||
           originHexToPixel.y < origin.x - _hexGridContext.maxSize ||
@@ -327,11 +327,11 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
     return hexWidgetList;
   }
 
-  List<Hex> _buildHexLayout() {
+  List<UIHex> _buildHexLayout() {
     Hex originHex = Hex(0, 0);
 
-    List<Hex> hexList = [];
-    hexList.add(originHex);
+    List<UIHex> hexList = [];
+    hexList.add(UIHex(originHex, radius: 0));
 
     //Start at one since we already seeded the origin
     int radius = 1;
@@ -347,7 +347,7 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
             break;
           }
 
-          hexList.add(neighborHex);
+          hexList.add(UIHex(neighborHex, radius: radius));
           neighborHex = neighborHex.neighbor((direction + 2) % 6);
           i++;
         }
@@ -363,9 +363,9 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
   ///Only return a [Positioned] if the widget will be visible, otherwise return
   /// null so we don't waste CPU cycles on rendering something that's not visible
   /// NOTE: As with the rest of a Hex grid, the x and y coordinates are reflected
-  Positioned _createPositionWidgetForHex(T hexGridChild, Hex hex,
+  Positioned _createPositionWidgetForHex(T hexGridChild, UIHex uiHex,
       Layout hexLayout, double containerWidth, double containerHeight) {
-    final Point hexToPixel = hex.toPixel(hexLayout);
+    final Point hexToPixel = uiHex.hex.toPixel(hexLayout);
 
     //If the right of the hex exceeds pass the left border of the container
     if (hexToPixel.y + _hexGridContext.maxSize < 0) {
@@ -394,11 +394,21 @@ class _HexGridWidgetState<T extends HexGridChild> extends State<HexGridWidget>
     return Positioned(
         top: hexToPixel.x,
         left: hexToPixel.y,
-        child: hexGridChild.toHexWidget(_hexGridContext, size)
+        child: hexGridChild.toHexWidget(_hexGridContext, size, uiHex)
     );
   }
 
   void _centerHexLayout() {
-    offset = Offset(origin.x, origin.y);
+    xPos = xViewPos;
+    yPos = yViewPos;
+
+    _enableFling = true;
+    _flingAnimation = Tween<Offset>(
+        begin: Offset(0, 0),
+        end: Offset(origin.x - xPos, origin.y - yPos)
+    ).animate(_controller);
+    _controller
+      ..value = 0.0
+      ..fling(velocity: 1);
   }
 }

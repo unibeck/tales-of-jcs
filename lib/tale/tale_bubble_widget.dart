@@ -7,10 +7,11 @@ class TaleBubbleWidget extends StatelessWidget {
   final Tale tale;
   final double size;
   final double maxSize;
+  final Color color;
 
   TaleBubbleWidget({
     @required this.onTap, @required this.tale,
-    @required this.size, @required this.maxSize});
+    @required this.size, @required this.maxSize, @required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +23,7 @@ class TaleBubbleWidget extends StatelessWidget {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              color: Theme.of(context).accentColor,
+              color: color,
               shape: BoxShape.circle,
             ),
             child: Center(
