@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tales_of_jcs/tale/tale.dart';
-import 'package:tales_of_jcs/utils/custom_widgets/hex_child_widget.dart';
 
 class TaleListWidget extends StatelessWidget {
 
@@ -9,7 +8,7 @@ class TaleListWidget extends StatelessWidget {
   String publisherPhotoUrl;
 
   TaleListWidget({Key key, @required this.onTap, @required this.title})
-      :super(key: key);
+      : super(key: key);
 
   TaleListWidget.fromTale(Tale tale) {
     onTap = () {}; //TODO
