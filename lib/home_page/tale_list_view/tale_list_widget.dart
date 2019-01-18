@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:tales_of_jcs/tale/tale.dart';
@@ -21,12 +23,20 @@ class TaleListWidget extends StatefulWidget {
 class _TaleListWidgetState extends State<TaleListWidget> {
 
   User _publisher;
+  StreamSubscription _publisherSubscription;
 
   @override
   void initState() {
     super.initState();
 
     _setPublisher();
+  }
+
+  @override
+  void dispose() {
+    _publisherSubscription?.cancel();
+
+    super.dispose();
   }
 
   @override
@@ -50,11 +60,13 @@ class _TaleListWidgetState extends State<TaleListWidget> {
     );
   }
 
-  void _setPublisher() async {
-    DocumentSnapshot snapshot = await widget.tale.publisher.get();
+  void _setPublisher() {
+    final Stream<DocumentSnapshot> publisherStream = widget.tale.publisher.snapshots();
 
-    setState(() {
-      _publisher = User.fromSnapshot(snapshot);
+    _publisherSubscription = publisherStream.listen((DocumentSnapshot snapshot) {
+      setState(() {
+        _publisher = User.fromSnapshot(snapshot);
+      });
     });
   }
 }

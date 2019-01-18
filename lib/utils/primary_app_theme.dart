@@ -76,8 +76,8 @@ class PrimaryAppTheme {
       primaryColorLight: _primaryColorSwatch[500],
       primaryColorDark: _primaryColorSwatch[900],
       accentColor: _accentColorSwatch[500],
-//      backgroundColor: Colors.black,
-//      canvasColor: Color(0xFF1a1a1a),
+      backgroundColor: Colors.black,
+      canvasColor: Color(0xFF1a1a1a),
     );
   }
 }
