@@ -55,29 +55,73 @@ class PrimaryAppTheme {
 
   static ThemeData _buildLightTheme() {
     return ThemeData.light().copyWith(
-        textTheme: ThemeData.light().textTheme.apply(
-              bodyColor: Colors.black,
-              displayColor: Colors.black,
-            ),
-        primaryColor: _primaryColorSwatch[500],
-        primaryColorLight: _primaryColorSwatch[300],
-        primaryColorDark: _primaryColorSwatch[900],
-        accentColor: _accentColorSwatch[500],
-        backgroundColor: Colors.white);
+      primaryColor: _primaryColorSwatch[500],
+      primaryColorLight: _primaryColorSwatch[300],
+      primaryColorDark: _primaryColorSwatch[900],
+      accentColor: _accentColorSwatch[500],
+      backgroundColor: Colors.white,
+      buttonColor: _primaryColorSwatch[500],
+      scaffoldBackgroundColor: Colors.white,
+      textSelectionHandleColor: Colors.black,
+      textSelectionColor: Colors.black12,
+      cursorColor: Colors.black,
+      toggleableActiveColor: Colors.black,
+      inputDecorationTheme: InputDecorationTheme(
+        border: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black.withOpacity(0.1)),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
+        ),
+      ),
+      textTheme: ThemeData.light().textTheme.apply(
+            bodyColor: Colors.black,
+            displayColor: Colors.black,
+          ),
+      buttonTheme: ButtonThemeData(
+        textTheme: ButtonTextTheme.primary,
+        colorScheme: ColorScheme.fromSwatch(primarySwatch: _primaryColorSwatch),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      ),
+    );
   }
 
   static ThemeData _buildDarkTheme() {
     return ThemeData.dark().copyWith(
-      textTheme: ThemeData.dark().textTheme.apply(
-            bodyColor: Colors.white,
-            displayColor: Colors.white,
-          ),
       primaryColor: _primaryColorSwatch[800],
       primaryColorLight: _primaryColorSwatch[500],
       primaryColorDark: _primaryColorSwatch[900],
       accentColor: _accentColorSwatch[500],
       backgroundColor: Colors.black,
       canvasColor: Color(0xFF1a1a1a),
+      buttonColor: _accentColorSwatch[500],
+      scaffoldBackgroundColor: Colors.black,
+      textSelectionHandleColor: Colors.white,
+      textSelectionColor: Colors.white70,
+      cursorColor: Colors.white,
+      toggleableActiveColor: Colors.white,
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.white),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.7)),
+        ),
+      ),
+      textTheme: ThemeData.dark().textTheme.apply(
+            bodyColor: Colors.white,
+            displayColor: Colors.white,
+          ),
+      buttonTheme: ButtonThemeData(
+        colorScheme: ColorScheme.fromSwatch(primarySwatch: _accentColorSwatch),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      ),
     );
   }
 }

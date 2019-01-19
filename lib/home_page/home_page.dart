@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:dynamic_theme/dynamic_theme.dart';
 import 'package:hexagonal_grid_widget/hex_grid_context.dart';
 import 'package:hexagonal_grid_widget/hex_grid_widget.dart';
+import 'package:tales_of_jcs/home_page/add_tale_view/add_tale_view.dart';
 
 import 'package:tales_of_jcs/home_page/tale_hex_grid_view/tale_hex_grid_child.dart';
 import 'package:tales_of_jcs/home_page/tale_list_view/tale_list_widget.dart';
@@ -136,7 +137,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _getAddTaleView() {
-    return Center(child: Text("Add Screen"));
+    return AddTaleWidget();
   }
 }
 

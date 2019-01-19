@@ -21,7 +21,6 @@ class TaleListWidget extends StatefulWidget {
 }
 
 class _TaleListWidgetState extends State<TaleListWidget> {
-
   User _publisher;
   StreamSubscription _publisherSubscription;
 
@@ -61,9 +60,11 @@ class _TaleListWidgetState extends State<TaleListWidget> {
   }
 
   void _setPublisher() {
-    final Stream<DocumentSnapshot> publisherStream = widget.tale.publisher.snapshots();
+    final Stream<DocumentSnapshot> publisherStream =
+        widget.tale.publisher.snapshots();
 
-    _publisherSubscription = publisherStream.listen((DocumentSnapshot snapshot) {
+    _publisherSubscription =
+        publisherStream.listen((DocumentSnapshot snapshot) {
       setState(() {
         _publisher = User.fromSnapshot(snapshot);
       });
