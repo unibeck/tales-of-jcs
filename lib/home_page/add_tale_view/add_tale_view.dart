@@ -7,8 +7,9 @@ class AddTaleWidget extends StatefulWidget {
 }
 
 class _AddTaleWidgetState extends State<AddTaleWidget> {
-  final _formKey = GlobalKey<FormState>();
-  final _tagFormFieldKey = GlobalKey<FormFieldState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormFieldState> _tagFormFieldKey = GlobalKey<FormFieldState>();
+  final FocusNode _tagFormFieldFocusNode = FocusNode();
   final int _maxTaleTitleLength = 20;
   final TextEditingController _tagTextController = TextEditingController();
 
@@ -18,6 +19,16 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
   @override
   void initState() {
     super.initState();
+
+    //Remove the error message once leaving the tag text box focus. This is
+    // because the tag input is treated a different than the other inputs as
+    // the user adds tags as chips via the input instead of the tag text
+    // being the input
+    _tagFormFieldFocusNode.addListener(() {
+      if (!_tagFormFieldFocusNode.hasFocus) {
+        _tagFormFieldKey.currentState.reset();
+      }
+    });
 
     _tagTextController.addListener(() {
       setState(() {
@@ -34,6 +45,8 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
   @override
   void dispose() {
     _tagTextController.dispose();
+    _tagFormFieldFocusNode.dispose();
+
     super.dispose();
   }
 
@@ -66,7 +79,6 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
 
     return Container(
       color: Theme.of(context).backgroundColor,
-//      padding: EdgeInsets.all(16),
       child: Form(
         key: _formKey,
         child: Stack(children: <Widget>[
@@ -113,35 +125,46 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                 ),
               ),
               ListTile(
-                trailing: IconButton(
-                    icon: const Icon(Icons.add_circle_outline),
-                    onPressed: _handleAddTagAction),
-                title: TextFormField(
-                  key: _tagFormFieldKey,
-                  controller: _tagTextController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration:
-                      InputDecoration(hintText: 'Impossible', labelText: 'Tag', errorMaxLines: 5),
-                  validator: (value) {
-                    if (value != null &&
-                        value.isNotEmpty &&
-                        value.split(" ").length != 1) {
-                      return 'Tags can only be one word';
-                    }
+                title: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 8,
+                        child: TextFormField(
+                          key: _tagFormFieldKey,
+                          controller: _tagTextController,
+                          textCapitalization: TextCapitalization.words,
+                          focusNode: _tagFormFieldFocusNode,
+                          decoration: InputDecoration(
+                              hintText: 'Impossible',
+                              labelText: 'Tag',
+                              errorMaxLines: 5),
+                          validator: (value) {
+                            if (value != null &&
+                                value.isNotEmpty &&
+                                value.split(" ").length != 1) {
+                              return 'Tags can only be one word';
+                            }
 
-                    if (_tagChipWidgets.containsKey(value)) {
-                      return 'You have already added this tag';
-                    }
-
-                    if (_tagChipWidgets.length >= 3) {
-                      return 'You can only add three tags to a story, '
-                          'delete another one if you would like to add '
-                          'this one instead';
-                    }
-                  },
-                ),
+                            if (_tagChipWidgets.containsKey(value)) {
+                              return 'You have already added this tag';
+                            }
+                          },
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: IconButton(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 17),
+                            icon: const Icon(Icons.add_circle_outline),
+                            onPressed: _handleAddTagAction),
+                      ),
+                    ]),
               ),
               ListTile(
+                contentPadding:
+                    const EdgeInsets.only(bottom: 72, left: 16, right: 16),
                 title: Wrap(
                   spacing: 8,
                   children: _tagChipWidgets.values.toList(),
