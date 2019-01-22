@@ -60,14 +60,16 @@ class _TaleListWidgetState extends State<TaleListWidget> {
   }
 
   void _setPublisher() {
-    final Stream<DocumentSnapshot> publisherStream =
-        widget.tale.publisher.snapshots();
+    if (widget.tale.publisher != null) {
+      final Stream<DocumentSnapshot> publisherStream =
+          widget.tale.publisher.snapshots();
 
-    _publisherSubscription =
-        publisherStream.listen((DocumentSnapshot snapshot) {
-      setState(() {
-        _publisher = User.fromSnapshot(snapshot);
+      _publisherSubscription =
+          publisherStream.listen((DocumentSnapshot snapshot) {
+        setState(() {
+          _publisher = User.fromSnapshot(snapshot);
+        });
       });
-    });
+    }
   }
 }

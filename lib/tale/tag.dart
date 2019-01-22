@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Tag {
-  final DocumentReference reference;
-  final String title;
+  DocumentReference reference;
+  String title;
 
-  Tag(this.reference, this.title);
+  Tag();
 
   Tag.fromMap(Map<String, dynamic> map, {this.reference})
       : title = map['title'];

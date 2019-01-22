@@ -8,6 +8,7 @@ import 'package:tales_of_jcs/home_page/add_tale_view/add_tale_view.dart';
 
 import 'package:tales_of_jcs/home_page/tale_hex_grid_view/tale_hex_grid_child.dart';
 import 'package:tales_of_jcs/home_page/tale_list_view/tale_list_widget.dart';
+import 'package:tales_of_jcs/tale/tag.dart';
 import 'package:tales_of_jcs/tale/tale.dart';
 
 class HomePage extends StatefulWidget {

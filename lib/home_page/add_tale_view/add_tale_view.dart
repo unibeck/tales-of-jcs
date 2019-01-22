@@ -1,5 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:tales_of_jcs/tale/tag.dart';
+import 'package:tales_of_jcs/tale/tale.dart';
+import 'package:tales_of_jcs/tale/tale_service.dart';
 
 class AddTaleWidget extends StatefulWidget {
   @override
@@ -8,17 +12,25 @@ class AddTaleWidget extends StatefulWidget {
 
 class _AddTaleWidgetState extends State<AddTaleWidget> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final GlobalKey<FormFieldState> _tagFormFieldKey = GlobalKey<FormFieldState>();
+  final GlobalKey<FormFieldState> _tagFormFieldKey =
+      GlobalKey<FormFieldState>();
   final FocusNode _tagFormFieldFocusNode = FocusNode();
   final int _maxTaleTitleLength = 20;
   final TextEditingController _tagTextController = TextEditingController();
 
   VoidCallback _handleAddTagAction;
-  Map<String, Chip> _tagChipWidgets = {};
+  Map<String, Chip> _tagChipWidgets;
+  Tale _newTale;
+  List<Tag> _newTags;
+
+  //Services
+  final TaleService _taleService = TaleService.instance;
 
   @override
   void initState() {
     super.initState();
+
+    _tagChipWidgets = {};
 
     //Remove the error message once leaving the tag text box focus. This is
     // because the tag input is treated a different than the other inputs as
@@ -94,12 +106,15 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                       decoration: InputDecoration(
                           hintText: 'Joshua did this crazy thing',
                           labelText: 'Story title'),
+                      onSaved: (value) {
+                        _newTale.title = value;
+                      },
                       validator: (value) {
-//                        if (value == null || value.isEmpty) {
-//                          return 'Anything is better than nothing';
-//                        } else if (value.length > _maxTaleTitleLength) {
-//                          return 'The title has to be shorter than 20 characters';
-//                        }
+                        if (value == null || value.isEmpty) {
+                          return 'Anything is better than nothing';
+                        } else if (value.length > _maxTaleTitleLength) {
+                          return 'The title has to be shorter than 20 characters';
+                        }
                       }),
                 ),
               ),
@@ -113,14 +128,17 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                       decoration: InputDecoration(
                           hintText: 'This one time, at band camp...',
                           labelText: 'Story'),
+                      onSaved: (value) {
+                        _newTale.story = value;
+                      },
                       validator: (value) {
-//                        if (value == null || value.isEmpty) {
-//                          return 'You must have an interesting JCS story, enter it!';
-//                        }
+                        if (value == null || value.isEmpty) {
+                          return 'You must have an interesting JCS story, enter it!';
+                        }
 
-//                  if (value.length < 18 || value.split(" ").length < 8) {
-//                    return 'Come on, put some effort into the story';
-//                  }
+//                        if (value.length < 18 || value.split(" ").length < 8) {
+//                          return 'Come on, put some effort into the story';
+//                        }
                       }),
                 ),
               ),
@@ -139,6 +157,13 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                               hintText: 'Impossible',
                               labelText: 'Tag',
                               errorMaxLines: 5),
+                          onSaved: (value) {
+                            //We add the tag from the text field input as well
+                            // all the chips created from it
+                            _newTags.add(Tag()..title = value);
+                            _newTags.addAll(_tagChipWidgets.keys.map(
+                                (String tagText) => Tag()..title = tagText));
+                          },
                           validator: (value) {
                             if (value != null &&
                                 value.isNotEmpty &&
@@ -177,13 +202,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
             child: Padding(
               padding: EdgeInsets.only(bottom: 16),
               child: RaisedButton(
-                onPressed: () {
-                  if (_formKey.currentState.validate()) {
-                    //                      _formKey.currentState.save();
-                    Scaffold.of(context).showSnackBar(
-                        SnackBar(content: Text('Processing Data')));
-                  }
-                },
+                onPressed: _onFormSubmit,
                 child: Text('Submit'),
               ),
             ),
@@ -191,5 +210,22 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
         ]),
       ),
     );
+  }
+
+  void _onFormSubmit() {
+    if (_formKey.currentState.validate()) {
+      //Create new tale and tag and save all the form data to it
+      _newTale = Tale();
+      _newTags = [];
+      _formKey.currentState.save();
+
+      //TODO: Add publisher information, need user/auth service first
+
+      _taleService.createTale(_newTale).whenComplete(() {
+        Scaffold.of(context).showSnackBar(SnackBar(content: Text('Success')));
+      }).catchError((error) {
+        Scaffold.of(context).showSnackBar(SnackBar(content: Text('Failed')));
+      });
+    }
   }
 }

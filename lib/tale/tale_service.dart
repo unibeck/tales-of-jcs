@@ -1,17 +1,34 @@
 import 'dart:async';
-import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tales_of_jcs/tale/tale.dart';
-import 'package:tales_of_jcs/tale/tale_rating.dart';
-import 'package:tales_of_jcs/user/user.dart';
 
 class TaleService {
+  //Singleton
+  TaleService._internal();
+  static final TaleService _instance = TaleService._internal();
+  static TaleService get instance {
+    return _instance;
+  }
+
+  final Firestore firestore = Firestore.instance;
+
   List<Tale> _tales = [];
   final StreamController<List<Tale>> _onNotificationsUpdate =
       StreamController<List<Tale>>.broadcast();
 
-  TaleService() {
-//    _testInit();
+//  Future<FirebaseUser> currentUser() {
+//    return firebaseAuth.currentUser();
+//  }
+
+  Future<void> createTale(Tale tale) {
+    Map<String, dynamic> taleMap = tale.toMap();
+    taleMap.addAll(<String, dynamic>{
+      'dateCreated': FieldValue.serverTimestamp(),
+      'dateLastModified': FieldValue.serverTimestamp(),
+    });
+
+    return firestore.collection('tales').document().setData(taleMap);
   }
 
   List<Tale> get tales {
