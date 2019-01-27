@@ -9,6 +9,7 @@ import 'package:tales_of_jcs/home_page/add_tale_view/add_tale_view.dart';
 import 'package:tales_of_jcs/home_page/tale_hex_grid_view/tale_hex_grid_child.dart';
 import 'package:tales_of_jcs/home_page/tale_list_view/tale_list_widget.dart';
 import 'package:tales_of_jcs/tale/tale.dart';
+import 'package:tales_of_jcs/tale/tale_service.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key, this.title}) : super(key: key);
@@ -31,6 +32,9 @@ class _HomePageState extends State<HomePage> {
   List<MenuChoice> _menuChildren;
   int _currentIndex;
   Widget _mainViewWidget;
+
+  //Services
+  final TaleService _taleService = TaleService.instance;
 
   @override
   void initState() {
@@ -101,7 +105,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _getTaleHexGridView() {
     return StreamBuilder<QuerySnapshot>(
-      stream: Firestore.instance.collection('tales-test').snapshots(),
+      stream: _taleService.talesStream,
       builder: (context, snapshot) {
         if (!snapshot.hasData) return LinearProgressIndicator();
 
@@ -119,7 +123,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _getTaleListView() {
     return StreamBuilder<QuerySnapshot>(
-      stream: Firestore.instance.collection('tales').snapshots(),
+      stream: _taleService.talesStream,
       builder: (context, snapshot) {
         if (!snapshot.hasData) return LinearProgressIndicator();
 

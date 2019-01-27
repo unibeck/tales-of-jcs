@@ -15,6 +15,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
   final int _maxTaleTitleLength = 20;
 
   FocusNode _tagFormFieldFocusNode;
+  bool _finalCheckBeforeSubmit;
 
   TextEditingController _tagTextController;
   Map<String, Chip> _tagChipWidgets;
@@ -30,10 +31,6 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
 
     _tagFormFieldFocusNode = FocusNode();
 
-    _tagTextController = TextEditingController();
-    _tagChipWidgets = {};
-    _newTale = Tale();
-
     //Remove the error message once leaving the tag text box focus. This is
     // because the tag input is treated a different than the other inputs as
     // the user adds tags as chips via the input instead of the tag text
@@ -43,6 +40,16 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
         _tagFormFieldKey.currentState.reset();
       }
     });
+
+    _initFormState();
+  }
+
+  void _initFormState() {
+    _finalCheckBeforeSubmit = false;
+
+    _tagTextController = TextEditingController();
+    _tagChipWidgets = {};
+    _newTale = Tale();
 
     _tagTextController.addListener(() {
       setState(() {
@@ -66,6 +73,8 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
 
   void _addTagToTagChips() {
     setState(() {
+      _finalCheckBeforeSubmit = false;
+
       if (_tagFormFieldKey.currentState.validate()) {
         final String textOfNewChip = _tagTextController.text;
 
@@ -173,7 +182,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                               return 'Tags can only be one word';
                             }
 
-                            if (_tagChipWidgets.length < 1) {
+                            if (_finalCheckBeforeSubmit && _tagChipWidgets.length < 1) {
                               return 'Add at least one tag';
                             }
 
@@ -219,6 +228,8 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
   }
 
   void _onFormSubmit() async {
+    _finalCheckBeforeSubmit = true;
+
     if (_formKey.currentState.validate()) {
       if (_tagTextController.text != null &&
           _tagTextController.text.isNotEmpty) {
@@ -233,15 +244,14 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
       Future<void> createTaleFuture = _taleService.createTale(_newTale);
       _showIndeterminateProgressDialog();
 
-      createTaleFuture.whenComplete(() async {
+      createTaleFuture.whenComplete(() {
         Navigator.of(context).pop();
         Scaffold.of(context).showSnackBar(SnackBar(content: Text('Success')));
 
+        //Reset the form's state
         setState(() {
           _formKey.currentState.reset();
-          _tagTextController = TextEditingController();
-          _tagChipWidgets = {};
-          _newTale = Tale();
+          _initFormState();
         });
       }).catchError((error) {
         Navigator.of(context).pop();
@@ -250,7 +260,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
     }
   }
 
-  Future<void> _showWIPTagTextDialog(final String tagText) async {
+  Future<void> _showWIPTagTextDialog(final String tagText) {
     return showDialog(
       barrierDismissible: false,
       context: context,
@@ -295,8 +305,8 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
       context: context,
       builder: (BuildContext context) {
         return SimpleDialog(
-            titlePadding: EdgeInsets.all(0),
-            contentPadding: EdgeInsets.all(0),
+          titlePadding: EdgeInsets.all(0),
+          contentPadding: EdgeInsets.all(0),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           children: <Widget>[
@@ -304,11 +314,13 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
-                    padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(),),
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                ),
                 Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text("Submitting"),),
+                  padding: EdgeInsets.all(16),
+                  child: Text("Submitting"),
+                ),
               ],
             ),
           ],

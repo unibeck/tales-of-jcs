@@ -11,17 +11,11 @@ class TaleService {
     return _instance;
   }
 
-  final Firestore _firestore = Firestore.instance;
-  final String _talesCollection = "tales-test";
+  static final Firestore _firestore = Firestore.instance;
+  static final String _talesCollection = "tales-test";
 
-  List<Tale> _tales = [];
-  final StreamController<List<Tale>> _onNotificationsUpdate =
-      StreamController<List<Tale>>.broadcast();
-
-//  Future<FirebaseUser> currentUser() {
-//    Query query = db.collection("users").startAt(searchText).endAt(searchText+ "\uf8ff");
-//    return firebaseAuth.currentUser();
-//  }
+  final Stream<QuerySnapshot> talesStream =
+      Firestore.instance.collection(_talesCollection).snapshots();
 
   Future<void> createTale(Tale tale) {
     Map<String, dynamic> taleMap = tale.toMap();
@@ -32,6 +26,14 @@ class TaleService {
 
     return _firestore.collection(_talesCollection).document().setData(taleMap);
   }
+
+//  final StreamController<List<Tale>> _onNotificationsUpdate =
+//  StreamController<List<Tale>>.broadcast();
+
+//  Future<FirebaseUser> currentUser() {
+//    Query query = db.collection("users").startAt(searchText).endAt(searchText+ "\uf8ff");
+//    return firebaseAuth.currentUser();
+//  }
 
 //  Future<void> addTagsToTale(Tale tale, Tag tag) {
 //    DocumentReference taleRef = Firestore.instance.collection('users').document(uid);
@@ -71,10 +73,6 @@ class TaleService {
 //
 //    return firestore.collection('tags').document().setData(taleMap);
 //  }
-
-  List<Tale> get tales {
-    return _tales;
-  }
 
 //  void _testInit() {
 //    User testUser = User("Jonathan", "rajonbeckman@gmail.com",
