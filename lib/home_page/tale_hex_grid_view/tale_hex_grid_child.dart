@@ -5,7 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:hexagonal_grid/hexagonal_grid.dart';
 import 'package:hexagonal_grid_widget/hex_grid_child.dart';
 import 'package:hexagonal_grid_widget/hex_grid_context.dart';
-import 'package:tales_of_jcs/tale/tale.dart';
+import 'package:tales_of_jcs/models/tale/tale.dart';
 
 class TaleHexGridChild extends HexGridChild {
   final Tale tale;

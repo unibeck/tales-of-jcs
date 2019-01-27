@@ -1,4 +1,4 @@
-import 'package:tales_of_jcs/user/user.dart';
+import 'package:tales_of_jcs/models/user/user.dart';
 
 class TaleRating {
   double rating;

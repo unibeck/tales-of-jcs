@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:tales_of_jcs/tale/tale.dart';
+import 'package:tales_of_jcs/models/tale/tale.dart';
 
 class TaleService {
   //Singleton

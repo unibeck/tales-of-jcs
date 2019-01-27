@@ -8,8 +8,8 @@ import 'package:tales_of_jcs/home_page/add_tale_view/add_tale_view.dart';
 
 import 'package:tales_of_jcs/home_page/tale_hex_grid_view/tale_hex_grid_child.dart';
 import 'package:tales_of_jcs/home_page/tale_list_view/tale_list_widget.dart';
-import 'package:tales_of_jcs/tale/tale.dart';
-import 'package:tales_of_jcs/tale/tale_service.dart';
+import 'package:tales_of_jcs/models/tale/tale.dart';
+import 'package:tales_of_jcs/services/tale/tale_service.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key, this.title}) : super(key: key);
@@ -113,7 +113,9 @@ class _HomePageState extends State<HomePage> {
             children:
                 snapshot.data.documents.map((DocumentSnapshot docSnapshot) {
               final Tale tale = Tale.fromSnapshot(docSnapshot);
-              return TaleHexGridChild(tale: tale, onTap: () {});
+              return TaleHexGridChild(tale: tale, onTap: () {
+                Navigator.pushNamed(context, 'tale_detail');
+              });
             }).toList(),
             hexGridContext: HexGridContext(_minHexWidgetSize, _maxHexWidgetSize,
                 _scaleFactor, _densityFactor, _velocityFactor));

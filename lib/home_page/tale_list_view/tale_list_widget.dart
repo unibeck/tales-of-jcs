@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:tales_of_jcs/tale/tale.dart';
-import 'package:tales_of_jcs/user/user.dart';
+import 'package:tales_of_jcs/models/tale/tale.dart';
+import 'package:tales_of_jcs/models/user/user.dart';
 
 class TaleListWidget extends StatefulWidget {
   final GestureTapCallback onTap;
@@ -55,7 +55,7 @@ class _TaleListWidgetState extends State<TaleListWidget> {
     return ListTile(
       leading: avatar,
       title: Text(widget.tale.title),
-      onTap: widget.onTap,
+      onTap: () => Navigator.pushNamed(context, 'tale_detail'),
     );
   }
 

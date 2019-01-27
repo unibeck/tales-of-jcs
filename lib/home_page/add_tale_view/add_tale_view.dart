@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:tales_of_jcs/tale/tale.dart';
-import 'package:tales_of_jcs/tale/tale_service.dart';
+import 'package:tales_of_jcs/models/tale/tale.dart';
+import 'package:tales_of_jcs/services/tale/tale_service.dart';
 
 class AddTaleWidget extends StatefulWidget {
   @override
@@ -118,10 +118,10 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                       decoration: InputDecoration(
                           hintText: 'Joshua did this crazy thing',
                           labelText: 'Story title'),
-                      onSaved: (value) {
+                      onSaved: (String value) {
                         _newTale.title = value;
                       },
-                      validator: (value) {
+                      validator: (String value) {
                         if (value == null || value.isEmpty) {
                           return 'Anything is better than nothing';
                         } else if (value.length > _maxTaleTitleLength) {
@@ -140,10 +140,10 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                       decoration: InputDecoration(
                           hintText: 'This one time, at band camp...',
                           labelText: 'Story'),
-                      onSaved: (value) {
+                      onSaved: (String value) {
                         _newTale.story = value;
                       },
-                      validator: (value) {
+                      validator: (String value) {
                         if (value == null || value.isEmpty) {
                           return 'You must have an interesting JCS story, enter it!';
                         }
@@ -169,26 +169,14 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                               hintText: 'Impossible',
                               labelText: 'Tag',
                               errorMaxLines: 5),
-                          onSaved: (value) {
+                          onSaved: (String value) {
                             //We purposely don't add `value` as a tag since the
                             // user didn't explicitly add it. There is a check
                             // later to inform the user about the WIP input
                             _newTale.tags.addAll(_tagChipWidgets.keys);
                           },
-                          validator: (value) {
-                            if (value != null &&
-                                value.isNotEmpty &&
-                                value.split(" ").length != 1) {
-                              return 'Tags can only be one word';
-                            }
-
-                            if (_finalCheckBeforeSubmit && _tagChipWidgets.length < 1) {
-                              return 'Add at least one tag';
-                            }
-
-                            if (_tagChipWidgets.containsKey(value)) {
-                              return 'You have already added this tag';
-                            }
+                          validator: (String value) {
+                            return _validateTagInputAndChips(value);
                           },
                         ),
                       ),
@@ -327,5 +315,28 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
         );
       },
     );
+  }
+
+  //We use the tag text input to validate both the input and the chips. Though
+  // we don't want to validate the tag input if we're about to submit since we
+  // disregard it
+  String _validateTagInputAndChips(String value) {
+    if (_finalCheckBeforeSubmit) {
+      if (_tagChipWidgets.length < 1) {
+        return 'Add at least one tag';
+      }
+    } else {
+      if (value != null &&
+          value.isNotEmpty &&
+          value.split(" ").length != 1) {
+        return 'Tags can only be one word';
+      }
+
+      if (_tagChipWidgets.containsKey(value)) {
+        return 'You have already added this tag';
+      }
+    }
+
+    return null;
   }
 }
