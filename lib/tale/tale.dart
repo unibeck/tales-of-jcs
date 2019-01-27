@@ -1,6 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:tales_of_jcs/tale/tag.dart';
-import 'package:tales_of_jcs/user/user.dart';
 
 class Tale {
   DocumentReference reference;
@@ -8,9 +6,9 @@ class Tale {
   String story;
   DocumentReference publisher;
   DocumentReference rating;
-  List<DocumentReference> readBy;
+  List<DocumentReference> readBy = [];
   String jcsVerified;
-  List<DocumentReference> tags;
+  List<String> tags = [];
   DateTime dateCreated;
   DateTime dateLastModified;
 
@@ -23,7 +21,7 @@ class Tale {
         rating = map['rating'],
         readBy = map['readBy']?.cast<DocumentReference>(),
         jcsVerified = map['jcsVerified'],
-        tags = map['tags']?.cast<DocumentReference>(),
+        tags = map['tags']?.cast<String>(),
         dateCreated = map['dateCreated'],
         dateLastModified = map['dateLastModified'];
 

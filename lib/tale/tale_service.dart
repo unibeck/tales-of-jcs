@@ -11,13 +11,15 @@ class TaleService {
     return _instance;
   }
 
-  final Firestore firestore = Firestore.instance;
+  final Firestore _firestore = Firestore.instance;
+  final String _talesCollection = "tales-test";
 
   List<Tale> _tales = [];
   final StreamController<List<Tale>> _onNotificationsUpdate =
       StreamController<List<Tale>>.broadcast();
 
 //  Future<FirebaseUser> currentUser() {
+//    Query query = db.collection("users").startAt(searchText).endAt(searchText+ "\uf8ff");
 //    return firebaseAuth.currentUser();
 //  }
 
@@ -28,8 +30,47 @@ class TaleService {
       'dateLastModified': FieldValue.serverTimestamp(),
     });
 
-    return firestore.collection('tales').document().setData(taleMap);
+    return _firestore.collection(_talesCollection).document().setData(taleMap);
   }
+
+//  Future<void> addTagsToTale(Tale tale, Tag tag) {
+//    DocumentReference taleRef = Firestore.instance.collection('users').document(uid);
+//    if (tale.reference == null) {
+//
+//    }
+//
+//    Map<String, dynamic> taleMap = tag.toMap();
+//
+//    firestore.runTransaction((Transaction tx) async {
+//      DocumentSnapshot postSnapshot = await tx.get(taleRef);
+//      if (postSnapshot.exists) {
+//        // Extend 'favorites' if the list does not contain the recipe ID:
+//        if (!postSnapshot.data['favorites'].contains(recipeId)) {
+//          await tx.update(favoritesReference, <String, dynamic>{
+//            'favorites': FieldValue.arrayUnion([recipeId])
+//          });
+//          // Delete the recipe ID from 'favorites':
+//        } else {
+//          await tx.update(favoritesReference, <String, dynamic>{
+//            'favorites': FieldValue.arrayRemove([recipeId])
+//          });
+//        }
+//      } else {
+//        // Create a document for the current user in collection 'users'
+//        // and add a new array 'favorites' to the document:
+//        await tx.set(favoritesReference, {
+//          'favorites': [recipeId]
+//        });
+//      }
+//    }).then((result) {
+//      return true;
+//    }).catchError((error) {
+//      print('Error: $error');
+//      return false;
+//    });
+//
+//    return firestore.collection('tags').document().setData(taleMap);
+//  }
 
   List<Tale> get tales {
     return _tales;

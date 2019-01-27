@@ -1,7 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:tales_of_jcs/tale/tag.dart';
 import 'package:tales_of_jcs/tale/tale.dart';
 import 'package:tales_of_jcs/tale/tale_service.dart';
 
@@ -14,14 +12,14 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final GlobalKey<FormFieldState> _tagFormFieldKey =
       GlobalKey<FormFieldState>();
-  final FocusNode _tagFormFieldFocusNode = FocusNode();
   final int _maxTaleTitleLength = 20;
-  final TextEditingController _tagTextController = TextEditingController();
 
-  VoidCallback _handleAddTagAction;
+  FocusNode _tagFormFieldFocusNode;
+
+  TextEditingController _tagTextController;
   Map<String, Chip> _tagChipWidgets;
   Tale _newTale;
-  List<Tag> _newTags;
+  VoidCallback _handleAddTagAction;
 
   //Services
   final TaleService _taleService = TaleService.instance;
@@ -30,7 +28,11 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
   void initState() {
     super.initState();
 
+    _tagFormFieldFocusNode = FocusNode();
+
+    _tagTextController = TextEditingController();
     _tagChipWidgets = {};
+    _newTale = Tale();
 
     //Remove the error message once leaving the tag text box focus. This is
     // because the tag input is treated a different than the other inputs as
@@ -56,8 +58,8 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
 
   @override
   void dispose() {
-    _tagTextController.dispose();
-    _tagFormFieldFocusNode.dispose();
+    _tagFormFieldFocusNode?.dispose();
+    _tagTextController?.dispose();
 
     super.dispose();
   }
@@ -100,6 +102,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                 title: Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: TextFormField(
+                      autofocus: true,
                       textCapitalization: TextCapitalization.sentences,
                       maxLength: _maxTaleTitleLength,
                       maxLengthEnforced: false,
@@ -136,9 +139,9 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                           return 'You must have an interesting JCS story, enter it!';
                         }
 
-//                        if (value.length < 18 || value.split(" ").length < 8) {
-//                          return 'Come on, put some effort into the story';
-//                        }
+                        if (value.length < 18 || value.split(" ").length < 8) {
+                          return 'Come on, put some effort into the story';
+                        }
                       }),
                 ),
               ),
@@ -158,17 +161,20 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                               labelText: 'Tag',
                               errorMaxLines: 5),
                           onSaved: (value) {
-                            //We add the tag from the text field input as well
-                            // all the chips created from it
-                            _newTags.add(Tag()..title = value);
-                            _newTags.addAll(_tagChipWidgets.keys.map(
-                                (String tagText) => Tag()..title = tagText));
+                            //We purposely don't add `value` as a tag since the
+                            // user didn't explicitly add it. There is a check
+                            // later to inform the user about the WIP input
+                            _newTale.tags.addAll(_tagChipWidgets.keys);
                           },
                           validator: (value) {
                             if (value != null &&
                                 value.isNotEmpty &&
                                 value.split(" ").length != 1) {
                               return 'Tags can only be one word';
+                            }
+
+                            if (_tagChipWidgets.length < 1) {
+                              return 'Add at least one tag';
                             }
 
                             if (_tagChipWidgets.containsKey(value)) {
@@ -212,20 +218,102 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
     );
   }
 
-  void _onFormSubmit() {
+  void _onFormSubmit() async {
     if (_formKey.currentState.validate()) {
-      //Create new tale and tag and save all the form data to it
-      _newTale = Tale();
-      _newTags = [];
+      if (_tagTextController.text != null &&
+          _tagTextController.text.isNotEmpty) {
+        await _showWIPTagTextDialog(_tagTextController.text);
+        return;
+      }
+
       _formKey.currentState.save();
 
       //TODO: Add publisher information, need user/auth service first
 
-      _taleService.createTale(_newTale).whenComplete(() {
+      Future<void> createTaleFuture = _taleService.createTale(_newTale);
+      _showIndeterminateProgressDialog();
+
+      createTaleFuture.whenComplete(() async {
+        Navigator.of(context).pop();
         Scaffold.of(context).showSnackBar(SnackBar(content: Text('Success')));
+
+        setState(() {
+          _formKey.currentState.reset();
+          _tagTextController = TextEditingController();
+          _tagChipWidgets = {};
+          _newTale = Tale();
+        });
       }).catchError((error) {
+        Navigator.of(context).pop();
         Scaffold.of(context).showSnackBar(SnackBar(content: Text('Failed')));
       });
     }
+  }
+
+  Future<void> _showWIPTagTextDialog(final String tagText) async {
+    return showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Work in Progress?"),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: RichText(
+            text: TextSpan(
+              style: Theme.of(context).textTheme.body1,
+              children: <TextSpan>[
+                TextSpan(text: 'You entered '),
+                TextSpan(
+                    text: '$tagText',
+                    style: Theme.of(context).textTheme.body1.copyWith(
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.bold)),
+                TextSpan(
+                    text:
+                        ', but never added it as a tag. You must add it as a tag or clear it before resubmitting.')
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+                return;
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showIndeterminateProgressDialog() {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return SimpleDialog(
+            titlePadding: EdgeInsets.all(0),
+            contentPadding: EdgeInsets.all(0),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          children: <Widget>[
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                    padding: EdgeInsets.all(16),
+                    child: CircularProgressIndicator(),),
+                Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text("Submitting"),),
+              ],
+            ),
+          ],
+        );
+      },
+    );
   }
 }
