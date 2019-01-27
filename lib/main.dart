@@ -4,6 +4,7 @@ import 'package:fluro/fluro.dart';
 
 import 'package:tales_of_jcs/home_page/home_page.dart';
 import 'package:dynamic_theme/dynamic_theme.dart';
+import 'package:tales_of_jcs/splash_screen/SplashScreen.dart';
 import 'package:tales_of_jcs/tale_detail_page/tale_detail_page.dart';
 import 'package:tales_of_jcs/utils/primary_app_theme.dart';
 
@@ -22,7 +23,7 @@ class TalesOfJCSApp extends StatelessWidget {
       themedWidgetBuilder: (context, theme) => MaterialApp(
           theme: theme,
           title: 'Tales of JCS',
-          home: HomePage(title: 'Tales'),
+          home: SplashScreen(),
           onGenerateRoute:
               router.generator // Use our Fluro routers for this app.
           ),
@@ -35,20 +36,23 @@ class TalesOfJCSApp extends StatelessWidget {
     // Define our splash page.
     router.define('splash', handler: Handler(
         handlerFunc: (BuildContext context, Map<String, dynamic> params) {
-//    return SplashPage();
+      return SplashScreen();
     }));
 
     // Define our home page.
-    router.define('home', handler: Handler(
-        handlerFunc: (BuildContext context, Map<String, dynamic> params) {
+    router.define('home', transitionType: TransitionType.fadeIn, handler:
+        Handler(
+            handlerFunc: (BuildContext context, Map<String, dynamic> params) {
       return HomePage();
     }));
 
     // Define our about page.
-    router.define('tale_detail', transitionType: TransitionType.inFromBottom, handler:
+    router.define('tale_detail', transitionType: TransitionType.native, handler:
         Handler(
             handlerFunc: (BuildContext context, Map<String, dynamic> params) {
-      return TaleDetailPage(title: "Tale",);
+      return TaleDetailPage(
+        title: "Tale",
+      );
     }));
 
     return router;

@@ -326,9 +326,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
         return 'Add at least one tag';
       }
     } else {
-      if (value != null &&
-          value.isNotEmpty &&
-          value.split(" ").length != 1) {
+      if (value != null && value.isNotEmpty && value.split(" ").length != 1) {
         return 'Tags can only be one word';
       }
 

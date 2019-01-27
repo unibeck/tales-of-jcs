@@ -12,9 +12,7 @@ import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({Key key, this.title}) : super(key: key);
-
-  final String title;
+  HomePage({Key key}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -43,18 +41,33 @@ class _HomePageState extends State<HomePage> {
     _setMainView(0);
 
     _menuChildren = []
-      ..add(MenuChoice(title: "Change Theme", icon: Icons.invert_colors));
+      ..add(MenuChoice(
+          title: "Change Theme",
+          icon: Icons.invert_colors,
+          onSelected: (context) {
+            DynamicTheme.of(context).setBrightness(
+                Theme.of(context).brightness == Brightness.dark
+                    ? Brightness.light
+                    : Brightness.dark);
+          }))
+      ..add(MenuChoice(
+          title: "Logout",
+          icon: Icons.exit_to_app,
+          //TODO: Make actually logout call
+          onSelected: (context) {
+            return Navigator.pushReplacementNamed(context, 'splash');
+          }));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text("Tales"),
         centerTitle: true,
         actions: <Widget>[
           PopupMenuButton<MenuChoice>(
-            onSelected: (MenuChoice choice) => choice.selected(context),
+            onSelected: (MenuChoice choice) => choice.onSelected(context),
             itemBuilder: (BuildContext context) {
               return _menuChildren.map((MenuChoice choice) {
                 return PopupMenuItem<MenuChoice>(
@@ -113,9 +126,11 @@ class _HomePageState extends State<HomePage> {
             children:
                 snapshot.data.documents.map((DocumentSnapshot docSnapshot) {
               final Tale tale = Tale.fromSnapshot(docSnapshot);
-              return TaleHexGridChild(tale: tale, onTap: () {
-                Navigator.pushNamed(context, 'tale_detail');
-              });
+              return TaleHexGridChild(
+                  tale: tale,
+                  onTap: () {
+                    Navigator.pushNamed(context, 'tale_detail');
+                  });
             }).toList(),
             hexGridContext: HexGridContext(_minHexWidgetSize, _maxHexWidgetSize,
                 _scaleFactor, _densityFactor, _velocityFactor));
@@ -147,16 +162,13 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+typedef MenuChoiceSelected = void Function(BuildContext context);
+
 class MenuChoice {
-  const MenuChoice({@required this.title, @required this.icon});
+  const MenuChoice(
+      {@required this.title, @required this.icon, @required this.onSelected});
 
   final String title;
   final IconData icon;
-
-  void selected(BuildContext context) {
-    DynamicTheme.of(context).setBrightness(
-        Theme.of(context).brightness == Brightness.dark
-            ? Brightness.light
-            : Brightness.dark);
-  }
+  final MenuChoiceSelected onSelected;
 }

@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 class PrimaryAppTheme {
   PrimaryAppTheme._();
 
-  static const int _yaleBlueValue = 0xFF0f4d92;
-  static const int _harvardCrimsonValue = 0xFFa51c30;
+  static const int yaleBlueValue = 0xFF0f4d92;
+  static const int harvardCrimsonValue = 0xFFa51c30;
 
   static const MaterialColor _primaryColorSwatch = MaterialColor(
-    _yaleBlueValue,
+    yaleBlueValue,
     const <int, Color>{
       50: const Color(0xFFe4f2fb),
       100: const Color(0xFFbddff5),
@@ -20,12 +20,12 @@ class PrimaryAppTheme {
       600: const Color(0xFF2d8cd5),
       700: const Color(0xFF247ac3),
       800: const Color(0xFF1c69b1),
-      900: const Color(_yaleBlueValue),
+      900: const Color(yaleBlueValue),
     },
   );
 
   static const MaterialColor _accentColorSwatch = MaterialColor(
-    _harvardCrimsonValue,
+    harvardCrimsonValue,
     const <int, Color>{
       50: const Color(0xFFfbeaef),
       100: const Color(0xFFf5cbd5),
@@ -36,7 +36,7 @@ class PrimaryAppTheme {
       600: const Color(0xFFd4334a),
       700: const Color(0xFFc22b42),
       800: const Color(0xFFb5253b),
-      900: const Color(_harvardCrimsonValue),
+      900: const Color(harvardCrimsonValue),
     },
   );
 
