@@ -8,7 +8,7 @@ class PrimaryAppTheme {
   static const int yaleBlueValue = 0xFF0f4d92;
   static const int harvardCrimsonValue = 0xFFa51c30;
 
-  static const MaterialColor _primaryColorSwatch = MaterialColor(
+  static const MaterialColor primaryColorSwatch = MaterialColor(
     yaleBlueValue,
     const <int, Color>{
       50: const Color(0xFFe4f2fb),
@@ -24,7 +24,7 @@ class PrimaryAppTheme {
     },
   );
 
-  static const MaterialColor _accentColorSwatch = MaterialColor(
+  static const MaterialColor accentColorSwatch = MaterialColor(
     harvardCrimsonValue,
     const <int, Color>{
       50: const Color(0xFFfbeaef),
@@ -55,12 +55,12 @@ class PrimaryAppTheme {
 
   static ThemeData _buildLightTheme() {
     return ThemeData.light().copyWith(
-        primaryColor: _primaryColorSwatch[500],
-        primaryColorLight: _primaryColorSwatch[300],
-        primaryColorDark: _primaryColorSwatch[900],
-        accentColor: _accentColorSwatch[500],
+        primaryColor: primaryColorSwatch[500],
+        primaryColorLight: primaryColorSwatch[300],
+        primaryColorDark: primaryColorSwatch[900],
+        accentColor: accentColorSwatch[500],
         backgroundColor: Colors.white,
-        buttonColor: _primaryColorSwatch[500],
+        buttonColor: primaryColorSwatch[500],
         scaffoldBackgroundColor: Colors.white,
         textSelectionHandleColor: Colors.black,
         textSelectionColor: Colors.black12,
@@ -84,7 +84,7 @@ class PrimaryAppTheme {
         buttonTheme: ButtonThemeData(
           textTheme: ButtonTextTheme.primary,
           colorScheme:
-              ColorScheme.fromSwatch(primarySwatch: _primaryColorSwatch),
+              ColorScheme.fromSwatch(primarySwatch: primaryColorSwatch),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         ));
@@ -92,13 +92,13 @@ class PrimaryAppTheme {
 
   static ThemeData _buildDarkTheme() {
     return ThemeData.dark().copyWith(
-        primaryColor: _primaryColorSwatch[800],
-        primaryColorLight: _primaryColorSwatch[500],
-        primaryColorDark: _primaryColorSwatch[900],
-        accentColor: _accentColorSwatch[500],
+        primaryColor: primaryColorSwatch[800],
+        primaryColorLight: primaryColorSwatch[500],
+        primaryColorDark: primaryColorSwatch[900],
+        accentColor: accentColorSwatch[500],
         backgroundColor: Colors.black,
         canvasColor: Color(0xFF1a1a1a),
-        buttonColor: _accentColorSwatch[500],
+        buttonColor: accentColorSwatch[500],
         scaffoldBackgroundColor: Colors.black,
         textSelectionHandleColor: Colors.white,
         textSelectionColor: Colors.white70,
@@ -120,8 +120,7 @@ class PrimaryAppTheme {
               displayColor: Colors.white,
             ),
         buttonTheme: ButtonThemeData(
-          colorScheme:
-              ColorScheme.fromSwatch(primarySwatch: _accentColorSwatch),
+          colorScheme: ColorScheme.fromSwatch(primarySwatch: accentColorSwatch),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         ));
