@@ -10,6 +10,7 @@ import 'package:tales_of_jcs/home_page/tale_hex_grid_view/tale_hex_grid_child.da
 import 'package:tales_of_jcs/home_page/tale_list_view/tale_list_widget.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
+import 'package:tales_of_jcs/tale_detail_page/tale_detail_page.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key}) : super(key: key);
@@ -130,7 +131,12 @@ class _HomePageState extends State<HomePage> {
               return TaleHexGridChild(
                   tale: tale,
                   onTap: () {
-                    Navigator.pushNamed(context, 'tale_detail');
+                    Navigator.push(
+                      context,
+                      TaleDetailPageRoute(
+                        builder: (context) => TaleDetailPage(tale: tale),
+                      ),
+                    );
                   });
             }).toList(),
             hexGridContext: HexGridContext(_minHexWidgetSize, _maxHexWidgetSize,

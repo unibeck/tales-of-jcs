@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/user/user.dart';
+import 'package:tales_of_jcs/tale_detail_page/tale_detail_page.dart';
 
 class TaleListWidget extends StatefulWidget {
   final GestureTapCallback onTap;
@@ -54,8 +55,16 @@ class _TaleListWidgetState extends State<TaleListWidget> {
 
     return ListTile(
       leading: avatar,
-      title: Text(widget.tale.title),
-      onTap: () => Navigator.pushNamed(context, 'tale_detail'),
+      title: Container(
+          child: Text(widget.tale.title)),
+      onTap: () {
+        return Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TaleDetailPage(tale: widget.tale),
+          ),
+        );
+      },
     );
   }
 
