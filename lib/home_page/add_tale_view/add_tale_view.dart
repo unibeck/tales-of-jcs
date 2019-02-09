@@ -116,16 +116,16 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                       maxLength: _maxTaleTitleLength,
                       maxLengthEnforced: false,
                       decoration: InputDecoration(
-                          hintText: 'Joshua did this crazy thing',
-                          labelText: 'Story title'),
+                          hintText: "Joshua did this crazy thing",
+                          labelText: "Story title"),
                       onSaved: (String value) {
                         _newTale.title = value;
                       },
                       validator: (String value) {
                         if (value == null || value.isEmpty) {
-                          return 'Anything is better than nothing';
+                          return "Anything is better than nothing";
                         } else if (value.length > _maxTaleTitleLength) {
-                          return 'The title has to be shorter than 20 characters';
+                          return "The title has to be shorter than 20 characters";
                         }
                       }),
                 ),
@@ -138,18 +138,18 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                       keyboardType: TextInputType.multiline,
                       maxLines: 3,
                       decoration: InputDecoration(
-                          hintText: 'This one time, at band camp...',
-                          labelText: 'Story'),
+                          hintText: "This one time, at band camp...",
+                          labelText: "Story"),
                       onSaved: (String value) {
                         _newTale.story = value;
                       },
                       validator: (String value) {
                         if (value == null || value.isEmpty) {
-                          return 'You must have an interesting JCS story, enter it!';
+                          return "You must have an interesting JCS story, enter it!";
                         }
 
                         if (value.length < 18 || value.split(" ").length < 8) {
-                          return 'Come on, put some effort into the story';
+                          return "Come on, put some effort into the story";
                         }
                       }),
                 ),
@@ -166,8 +166,8 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                           textCapitalization: TextCapitalization.words,
                           focusNode: _tagFormFieldFocusNode,
                           decoration: InputDecoration(
-                              hintText: 'Impossible',
-                              labelText: 'Tag',
+                              hintText: "Impossible",
+                              labelText: "Tag",
                               errorMaxLines: 5),
                           onSaved: (String value) {
                             //We purposely don't add `value` as a tag since the
@@ -206,7 +206,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
               padding: EdgeInsets.only(bottom: 16),
               child: RaisedButton(
                 onPressed: _onFormSubmit,
-                child: Text('Submit'),
+                child: Text("Submit"),
               ),
             ),
           )
@@ -234,7 +234,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
 
       createTaleFuture.whenComplete(() {
         Navigator.of(context).pop();
-        Scaffold.of(context).showSnackBar(SnackBar(content: Text('Success')));
+        Scaffold.of(context).showSnackBar(SnackBar(content: Text("Success")));
 
         //Reset the form's state
         setState(() {
@@ -243,7 +243,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
         });
       }).catchError((error) {
         Navigator.of(context).pop();
-        Scaffold.of(context).showSnackBar(SnackBar(content: Text('Failed')));
+        Scaffold.of(context).showSnackBar(SnackBar(content: Text("Failed")));
       });
     }
   }
@@ -261,15 +261,15 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
             text: TextSpan(
               style: Theme.of(context).textTheme.body1,
               children: <TextSpan>[
-                TextSpan(text: 'You entered '),
+                TextSpan(text: "You entered "),
                 TextSpan(
-                    text: '$tagText',
+                    text: "$tagText",
                     style: Theme.of(context).textTheme.body1.copyWith(
                         fontStyle: FontStyle.italic,
                         fontWeight: FontWeight.bold)),
                 TextSpan(
                     text:
-                        ', but never added it as a tag. You must add it as a tag or clear it before resubmitting.')
+                        ", but never added it as a tag. You must add it as a tag or clear it before resubmitting.")
               ],
             ),
           ),
@@ -323,15 +323,15 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
   String _validateTagInputAndChips(String value) {
     if (_finalCheckBeforeSubmit) {
       if (_tagChipWidgets.length < 1) {
-        return 'Add at least one tag';
+        return "Add at least one tag";
       }
     } else {
       if (value != null && value.isNotEmpty && value.split(" ").length != 1) {
-        return 'Tags can only be one word';
+        return "Tags can only be one word";
       }
 
       if (_tagChipWidgets.containsKey(value)) {
-        return 'You have already added this tag';
+        return "You have already added this tag";
       }
     }
 

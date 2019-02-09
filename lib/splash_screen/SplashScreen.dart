@@ -127,7 +127,7 @@ class SplashScreenPainter extends CustomPainter {
 
     Path mainBackground = Path();
     mainBackground.addRect(Rect.fromLTRB(0, 0, width, height));
-    paint.color = PrimaryAppTheme.primaryColorSwatch.shade700;
+    paint.color = PrimaryAppTheme.primaryYaleColorSwatch.shade700;
     canvas.drawPath(mainBackground, paint);
 
     Path ovalPath = Path();
@@ -148,7 +148,7 @@ class SplashScreenPainter extends CustomPainter {
     //Close line to reset it back
     ovalPath.close();
 
-    paint.color = PrimaryAppTheme.primaryColorSwatch.shade600;
+    paint.color = PrimaryAppTheme.primaryYaleColorSwatch.shade600;
     canvas.drawPath(ovalPath, paint);
   }
 

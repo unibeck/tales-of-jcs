@@ -8,7 +8,8 @@ class PrimaryAppTheme {
   static const int yaleBlueValue = 0xFF0f4d92;
   static const int harvardCrimsonValue = 0xFFa51c30;
 
-  static const MaterialColor primaryColorSwatch = MaterialColor(
+  //TODO: need to create a accentYaleColorSwatch
+  static const MaterialColor primaryYaleColorSwatch = MaterialColor(
     yaleBlueValue,
     const <int, Color>{
       50: const Color(0xFFe4f2fb),
@@ -24,7 +25,8 @@ class PrimaryAppTheme {
     },
   );
 
-  static const MaterialColor accentColorSwatch = MaterialColor(
+  //TODO: need to create a accentHarvardColorSwatch
+  static const MaterialColor primaryHarvardColorSwatch = MaterialColor(
     harvardCrimsonValue,
     const <int, Color>{
       50: const Color(0xFFfbeaef),
@@ -47,20 +49,20 @@ class PrimaryAppTheme {
 
   static ThemeData buildTheme(Brightness brightness) {
     if (brightness == Brightness.light) {
-      return _buildLightTheme();
+      return _buildYaleTheme();
     } else {
-      return _buildDarkTheme();
+      return _buildHarvardTheme();
     }
   }
 
-  static ThemeData _buildLightTheme() {
+  static ThemeData _buildYaleTheme() {
     return ThemeData.light().copyWith(
-        primaryColor: primaryColorSwatch[500],
-        primaryColorLight: primaryColorSwatch[300],
-        primaryColorDark: primaryColorSwatch[900],
-        accentColor: accentColorSwatch[500],
+        primaryColor: primaryYaleColorSwatch[500],
+        primaryColorLight: primaryYaleColorSwatch[300],
+        primaryColorDark: primaryYaleColorSwatch[900],
+        accentColor: primaryHarvardColorSwatch[500],
         backgroundColor: Colors.white,
-        buttonColor: primaryColorSwatch[500],
+        buttonColor: primaryHarvardColorSwatch[500],
         scaffoldBackgroundColor: Colors.white,
         textSelectionHandleColor: Colors.black,
         textSelectionColor: Colors.black12,
@@ -84,21 +86,21 @@ class PrimaryAppTheme {
         buttonTheme: ButtonThemeData(
           textTheme: ButtonTextTheme.primary,
           colorScheme:
-              ColorScheme.fromSwatch(primarySwatch: primaryColorSwatch),
+              ColorScheme.fromSwatch(primarySwatch: primaryHarvardColorSwatch),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         ));
   }
 
-  static ThemeData _buildDarkTheme() {
+  static ThemeData _buildHarvardTheme() {
     return ThemeData.dark().copyWith(
-        primaryColor: primaryColorSwatch[800],
-        primaryColorLight: primaryColorSwatch[500],
-        primaryColorDark: primaryColorSwatch[900],
-        accentColor: accentColorSwatch[500],
+        primaryColor: primaryHarvardColorSwatch[500],
+        primaryColorLight: primaryHarvardColorSwatch[300],
+        primaryColorDark: primaryHarvardColorSwatch[900],
+        accentColor: primaryYaleColorSwatch[500],
         backgroundColor: Colors.black,
         canvasColor: Color(0xFF1a1a1a),
-        buttonColor: accentColorSwatch[500],
+        buttonColor: primaryYaleColorSwatch[500],
         scaffoldBackgroundColor: Colors.black,
         textSelectionHandleColor: Colors.white,
         textSelectionColor: Colors.white70,
@@ -120,7 +122,7 @@ class PrimaryAppTheme {
               displayColor: Colors.white,
             ),
         buttonTheme: ButtonThemeData(
-          colorScheme: ColorScheme.fromSwatch(primarySwatch: accentColorSwatch),
+          colorScheme: ColorScheme.fromSwatch(primarySwatch: primaryYaleColorSwatch),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         ));

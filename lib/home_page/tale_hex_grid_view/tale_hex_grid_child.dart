@@ -26,6 +26,7 @@ class TaleHexGridChild extends HexGridChild {
             child: Container(
               width: size,
               height: size,
+              padding: EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: _getColorFromBrightness(
                     Theme.of(context).brightness, hex.orbital),
@@ -64,9 +65,9 @@ class TaleHexGridChild extends HexGridChild {
         colorsShadeToStartAt - ((index % numOfColorsFromSwatch) * 100);
 
     if (brightness == Brightness.light) {
-      return PrimaryAppTheme.primaryColorSwatch[colorShade];
+      return PrimaryAppTheme.primaryYaleColorSwatch[colorShade];
     } else {
-      return PrimaryAppTheme.accentColorSwatch[colorShade];
+      return PrimaryAppTheme.primaryHarvardColorSwatch[colorShade];
     }
   }
 }

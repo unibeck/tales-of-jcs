@@ -5,12 +5,16 @@ class Tale {
   String title;
   String story;
   DocumentReference publisher;
-  DocumentReference rating;
+
+  List<DocumentReference> ratings;
+  double averageRating;
+
   List<DocumentReference> readBy = [];
   String jcsVerified;
   List<String> tags = [];
   DateTime dateCreated;
   DateTime dateLastModified;
+  DocumentReference lastModifiedUser;
 
   Tale();
 
@@ -18,7 +22,7 @@ class Tale {
       : title = map['title'],
         story = map['story'],
         publisher = map['publisher'],
-        rating = map['rating'],
+        ratings = map['rating'],
         readBy = map['readBy']?.cast<DocumentReference>(),
         jcsVerified = map['jcsVerified'],
         tags = map['tags']?.cast<String>(),
@@ -32,7 +36,7 @@ class Tale {
         'title': title,
         'story': story,
         'publisher': publisher,
-        'rating': rating,
+        'rating': ratings,
         'readBy': readBy,
         'jcsVerified': jcsVerified,
         'tags': tags,
