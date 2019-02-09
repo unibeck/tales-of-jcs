@@ -131,12 +131,8 @@ class _HomePageState extends State<HomePage> {
               return TaleHexGridChild(
                   tale: tale,
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      TaleDetailPageRoute(
-                        builder: (context) => TaleDetailPage(tale: tale),
-                      ),
-                    );
+                    //Use unique route to assist in animation
+                    Navigator.push(context, TaleDetailPageRoute(tale: tale));
                   });
             }).toList(),
             hexGridContext: HexGridContext(_minHexWidgetSize, _maxHexWidgetSize,

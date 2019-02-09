@@ -55,8 +55,7 @@ class _TaleListWidgetState extends State<TaleListWidget> {
 
     return ListTile(
       leading: avatar,
-      title: Container(
-          child: Text(widget.tale.title)),
+      title: Text(widget.tale.title),
       onTap: () {
         return Navigator.push(
           context,

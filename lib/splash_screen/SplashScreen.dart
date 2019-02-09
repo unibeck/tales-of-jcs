@@ -12,7 +12,8 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  final int _jcsAnimationDurationInSecs = 1;
+  int _jcsAnimationDurationInMilliSecs = 1000;
+  int _pauseAfterJCSAnimationInMilliSecs = 2000;
 
   AnimationController _controller;
   Animation<double> _jcsMovementAnimation;
@@ -21,8 +22,15 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
+    //Only runs in debug mode, to help with quicker development
+    assert(() {
+      _jcsAnimationDurationInMilliSecs = 10;
+      _pauseAfterJCSAnimationInMilliSecs = 10;
+      return true;
+    }());
+
     _controller = new AnimationController(
-      duration: Duration(seconds: _jcsAnimationDurationInSecs),
+      duration: Duration(milliseconds: _jcsAnimationDurationInMilliSecs),
       vsync: this,
     );
     _jcsMovementAnimation = Tween<double>(begin: 1.0, end: 0.0)
@@ -33,7 +41,10 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    Timer(Duration(seconds: _jcsAnimationDurationInSecs + 2), () {
+    Timer(
+        Duration(
+            milliseconds: _jcsAnimationDurationInMilliSecs +
+                _pauseAfterJCSAnimationInMilliSecs), () {
       return Navigator.pushReplacementNamed(context, 'home');
     });
   }

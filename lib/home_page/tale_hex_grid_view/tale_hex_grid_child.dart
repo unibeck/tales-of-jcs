@@ -32,13 +32,16 @@ class TaleHexGridChild extends HexGridChild {
                 shape: BoxShape.circle,
               ),
               child: Center(
-                child: Text(
-                  tale.title,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .body1
-                      .copyWith(color: Colors.white),
+                child: Hero(
+                  tag: "${tale.reference.documentID}_title",
+                  child: Text(
+                    tale.title,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context)
+                        .textTheme
+                        .body1
+                        .copyWith(color: Colors.white),
+                  ),
                 ),
               ),
             ),
