@@ -1,8 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/user/user.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
+import 'package:tales_of_jcs/tale_detail_page/add_new_tag_dialog.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/HeroDialogRoute.dart';
 
 class TaleDetailPage extends StatefulWidget {
   TaleDetailPage({Key key, @required this.tale}) : super(key: key);
@@ -14,10 +17,13 @@ class TaleDetailPage extends StatefulWidget {
 }
 
 class _TaleDetailPageState extends State<TaleDetailPage> {
+  final String _tagHeroChip = "tagHeroChip_";
+
   //View related
   double _averageRating;
   int _ratingCount;
   User _publisher;
+  bool _loadingPublisher = true;
   User _lastModifiedUser;
 
   //Services
@@ -36,7 +42,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   @override
   Widget build(BuildContext context) {
     //Build widgets
-    List<Chip> _tagChips = _buildTagChips(context);
+    List<Widget> _tagChips = _buildTagChips(context);
     Widget avatar = _buildPublisherAvatar(context);
 
     return Hero(
@@ -57,7 +63,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                     child: Text(widget.tale.title,
                         style: Theme.of(context)
                             .textTheme
-                            .title
+                            .display2
                             .copyWith(color: Colors.white)),
                     tag: "${widget.tale.reference.documentID}_title"),
               ),
@@ -97,20 +103,25 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 title: Card(
+                  margin: EdgeInsets.all(0),
                   color: Theme.of(context).canvasColor,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: _buildStoryCardContent(),
+                  child: Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: _buildStoryCardContent(),
+                    ),
                   ),
                 ),
               ),
               ListTile(
                 contentPadding:
-                    const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                    EdgeInsets.only(bottom: 72, left: 16, right: 16),
                 title: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   spacing: 8,
                   children: _tagChips,
                 ),
@@ -145,15 +156,14 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   List<Widget> _buildStoryCardContent() {
     List<Widget> storyCardContent = [
       ListTile(
-        title: Text("Story"),
-        subtitle: Text('Music by Julie Gable. Lyrics by Sidney Stein.'),
+        title: Text("${widget.tale.story}"),
       ),
     ];
 
     if (_publisher != null) {
       storyCardContent
           .add(Text("Original story published by ${_publisher.name}"));
-    } else {
+    } else if (_loadingPublisher) {
       storyCardContent.add(Text("Loading original publisher"));
     }
 
@@ -163,7 +173,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     }
 
     //TODO: Build this. Only show if there are children to show
-    if (true) {
+    if (false) {
       storyCardContent.add(ButtonTheme.bar(
         // make buttons use the appropriate styles for cards
         child: ButtonBar(
@@ -199,14 +209,28 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     });
   }
 
-  void _setPublisher() async {
+  void _setPublisher() {
     if (widget.tale.publisher == null) {
+      setState(() {
+        _loadingPublisher = false;
+      });
       return;
     }
 
-    User publisher = User.fromSnapshot(await widget.tale.publisher.get());
     setState(() {
-      _publisher = publisher;
+      _loadingPublisher = true;
+    });
+
+    widget.tale.publisher.get().then((DocumentSnapshot snapshot) {
+      setState(() {
+        _publisher = User.fromSnapshot(snapshot);
+        _loadingPublisher = false;
+      });
+    }).catchError((err) {
+      print(err);
+      setState(() {
+        _loadingPublisher = false;
+      });
     });
   }
 
@@ -222,28 +246,51 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     });
   }
 
-  List<Chip> _buildTagChips(BuildContext context) {
-    List<Chip> tagChips = [];
+  List<Widget> _buildTagChips(BuildContext context) {
+    List<Widget> tagChips = List<Widget>();
 
     tagChips = widget.tale.tags.map((String tag) {
-      return Chip(
-        backgroundColor: Theme.of(context).canvasColor,
-        avatar: CircleAvatar(child: Icon(Icons.account_circle)),
-        label: Text(tag),
+      return Hero(
+        tag: "$_tagHeroChip$tag",
+        child: Chip(
+          backgroundColor: Theme.of(context).canvasColor,
+          avatar: CircleAvatar(child: Icon(Icons.account_circle)),
+          label: Text(tag),
+        ),
       );
     }).toList();
 
-    //We use the onDelete callback to hook into a Chip's touch event
-    tagChips.add(Chip(
-        onDeleted: _addNewTag,
-        deleteIcon: Icon(Icons.add_circle_outline),
-        backgroundColor: Theme.of(context).canvasColor,
-        label: Text("ADD NEW TAG")));
+    tagChips.add(Hero(
+      tag: "${_tagHeroChip}new",
+      child: Material(
+        borderRadius: BorderRadius.circular(16),
+        child: InkResponse(
+          onTap: _addNewTag,
+          child: Padding(
+            padding: EdgeInsets.all(2),
+            child: Container(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                    child: Text("ADD NEW TAG"),
+                  ),
+                  Icon(Icons.add_circle_outline)
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ));
 
     return tagChips;
   }
 
-  void _addNewTag() {}
+  void _addNewTag() {
+    Navigator.push(context, AddNewTagDialogRoute(tale: widget.tale));
+  }
 
   Widget _buildPublisherAvatar(BuildContext context) {
     Widget avatar;
