@@ -76,7 +76,9 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
       _finalCheckBeforeSubmit = false;
 
       if (_tagFormFieldKey.currentState.validate()) {
-        final String textOfNewChip = _tagTextController.text;
+        //Validate will ensure the the text is not null and is not empty, thus
+        // trim is safe
+        final String textOfNewChip = _tagTextController.text.trim();
 
         _tagChipWidgets.putIfAbsent(
             textOfNewChip,
@@ -326,7 +328,13 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
         return "Add at least one tag";
       }
     } else {
-      if (value != null && value.isNotEmpty && value.split(" ").length != 1) {
+      if (value == null || value.isEmpty) {
+        return "Anything is better than nothing";
+      }
+
+      value = value.trim();
+
+      if (value.split(" ").length != 1) {
         return "Tags can only be one word";
       }
 
