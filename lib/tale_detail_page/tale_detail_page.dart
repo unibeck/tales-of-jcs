@@ -5,6 +5,7 @@ import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/user/user.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/add_new_tag_modal.dart';
+import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hero_modal_route.dart';
 
 class TaleDetailPage extends StatefulWidget {
@@ -17,8 +18,6 @@ class TaleDetailPage extends StatefulWidget {
 }
 
 class _TaleDetailPageState extends State<TaleDetailPage> {
-  final String _tagHeroChip = "tagHeroChip_";
-
   //View related
   double _averageRating;
   int _ratingCount;
@@ -253,7 +252,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     //Add all tags associated with the Tale
     tagChips = widget.tale.tags.map((String tag) {
       return Hero(
-        tag: "$_tagHeroChip$tag",
+        tag: TagModalManifest.getChipHeroTagFromTaleTag(tag),
         child: Chip(
           backgroundColor: Theme.of(context).canvasColor,
           avatar: CircleAvatar(child: Icon(Icons.account_circle)),
@@ -292,10 +291,10 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
             //Since the toHero.child is hidden we can't use it to animate as we
             // do in the HeroFlightDirection.push block. Instead we reproduce
             // the widget to display a visible version
-            return _addNewTagWidget();
+            return _addNewTagWidget(false, false);
           }
         },
-        tag: "${_tagHeroChip}new",
+        tag: TagModalManifest.getNewChipHeroTag,
         //We use a visibility widget so we can hide the add tag widget on the
         // detail page when the add tag modal is open
         child: Visibility(
@@ -303,15 +302,15 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
             // to the widget's position
             replacement: Opacity(
               opacity: 0,
-              child: _addNewTagWidget(),
+              child: _addNewTagWidget(true, false),
             ),
             visible: _showAddNewTagWidget,
-            child: _addNewTagWidget())));
+            child: _addNewTagWidget(true, false))));
 
     return tagChips;
   }
 
-  Widget _addNewTagWidget() {
+  Widget _addNewTagWidget(bool withAddTag, bool withAddTagAsHero) {
     return Card(
       margin: EdgeInsets.all(0),
       shape: RoundedRectangleBorder(
@@ -323,13 +322,21 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
           child: Container(
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Padding(
+              children: List.unmodifiable(() sync* {
+                yield Padding(
                   padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                  child: ClipRect(child: Text("ADD NEW TAG")),
-                ),
-                Icon(Icons.add_circle_outline)
-              ],
+                  child: Text("ADD NEW TAG"),
+                );
+                if (withAddTag) {
+                  if (withAddTagAsHero) {
+                    yield Hero(
+                        tag: TagModalManifest.getNewChipAddIconHeroTag(),
+                        child: Icon(Icons.add_circle_outline));
+                  } else {
+                    yield Icon(Icons.add_circle_outline);
+                  }
+                }
+              }()),
             ),
           ),
         ),

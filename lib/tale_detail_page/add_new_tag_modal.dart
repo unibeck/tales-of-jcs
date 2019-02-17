@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
+import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
 
 class AddNewTagModal extends StatefulWidget {
   AddNewTagModal({Key key, @required this.tale}) : super(key: key);
@@ -12,7 +13,6 @@ class AddNewTagModal extends StatefulWidget {
 
 class _AddNewTagModalState extends State<AddNewTagModal> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final String _tagHeroChipNew = "tagHeroChip_new";
 
   @override
   void initState() {
@@ -27,30 +27,49 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
         child: SizedBox(
           height: 64,
           child: Hero(
-            tag: _tagHeroChipNew,
+            tag: TagModalManifest.getNewChipHeroTag,
             child: Card(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(32))),
-              child: Form(
-                key: _formKey,
-                child: TextFormField(
-                    textCapitalization: TextCapitalization.words,
+              child: Padding(
+                padding: EdgeInsets.only(left: 16, right: 8),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Center(
+                        child: Form(
+                          key: _formKey,
+                          child: TextFormField(
+                              textCapitalization: TextCapitalization.words,
 //              maxLength: _maxTaleTitleLength,
-                    maxLengthEnforced: false,
-                    decoration: InputDecoration(
-                        fillColor: Colors.white,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        hintText: "ADD NEW TAG"),
-                    onSaved: (String value) {
+                              maxLengthEnforced: false,
+                              decoration: InputDecoration(
+                                  fillColor: Colors.white,
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  hintText: "ADD NEW TAG"),
+                              onSaved: (String value) {
 //                _newTale.title = value;
-                    },
-                    validator: (String value) {
-                      if (value == null || value.isEmpty) {
-                        return "Anything is better than nothing";
-                      }
-                    }),
+                              },
+                              validator: (String value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Anything is better than nothing";
+                                }
+                              }),
+                        ),
+                      ),
+                    ),
+                    FloatingActionButton(
+                      heroTag: TagModalManifest.getNewChipAddIconHeroTag(),
+                      elevation: 3,
+                      backgroundColor: Colors.green,
+                      mini: true,
+                      onPressed: () {},
+                      child: Icon(Icons.add),
+                    )
+                  ],
+                ),
               ),
             ),
           ),
