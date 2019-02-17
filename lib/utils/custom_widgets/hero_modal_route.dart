@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class HeroDialogRoute<T> extends PageRoute<T> {
-  HeroDialogRoute({this.builder}) : super();
+class HeroModalRoute<T> extends PageRoute<T> {
+  HeroModalRoute({this.builder}) : super();
 
   final WidgetBuilder builder;
 
@@ -24,9 +24,6 @@ class HeroDialogRoute<T> extends PageRoute<T> {
   Widget buildTransitions(BuildContext context, Animation<double> animation,
       Animation<double> secondaryAnimation, Widget child) {
     return child;
-//    return FadeTransition(
-//        opacity: CurvedAnimation(parent: animation, curve: Curves.bounceInOut),
-//        child: child);
   }
 
   @override

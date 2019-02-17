@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/user/user.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
-import 'package:tales_of_jcs/tale_detail_page/add_new_tag_dialog.dart';
-import 'package:tales_of_jcs/utils/custom_widgets/HeroDialogRoute.dart';
+import 'package:tales_of_jcs/tale_detail_page/add_new_tag_modal.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/hero_modal_route.dart';
 
 class TaleDetailPage extends StatefulWidget {
   TaleDetailPage({Key key, @required this.tale}) : super(key: key);
@@ -250,6 +250,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   List<Widget> _buildTagChips(BuildContext context) {
     List<Widget> tagChips = List<Widget>();
 
+    //Add all tags associated with the Tale
     tagChips = widget.tale.tags.map((String tag) {
       return Hero(
         tag: "$_tagHeroChip$tag",
@@ -261,14 +262,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
       );
     }).toList();
 
-//    tagChips.add(Hero(
-//        tag: "${_tagHeroChip}new",
-//        child: Chip(
-//            onDeleted: _addNewTag,
-//            deleteIcon: Icon(Icons.add_circle_outline),
-//            backgroundColor: Theme.of(context).canvasColor,
-//            label: Text("ADD NEW TAG"))));
-
+    //Add a chip for a user to add additional tags
     tagChips.add(Hero(
         flightShuttleBuilder: (
           BuildContext flightContext,
@@ -277,6 +271,8 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
           BuildContext fromHeroContext,
           BuildContext toHeroContext,
         ) {
+          //Manage the visibility of the add tag widget to keep the widget
+          // hidden when we're animating and using the add tag modal
           animation.addStatusListener((AnimationStatus status) {
             if (AnimationStatus.dismissed == status) {
               setState(() {
@@ -289,19 +285,22 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
             }
           });
 
-          final Hero toHero = toHeroContext.widget;
-
           if (flightDirection == HeroFlightDirection.push) {
+            final Hero toHero = toHeroContext.widget;
             return toHero.child;
           } else {
-            return Center(child: _addNewTagWidget());
-//            return _addNewTagWidget();
-//            return Center(child: toHero.child);
-//            return toHero.child;
+            //Since the toHero.child is hidden we can't use it to animate as we
+            // do in the HeroFlightDirection.push block. Instead we reproduce
+            // the widget to display a visible version
+            return _addNewTagWidget();
           }
         },
         tag: "${_tagHeroChip}new",
+        //We use a visibility widget so we can hide the add tag widget on the
+        // detail page when the add tag modal is open
         child: Visibility(
+            //We use an invisible widget so the Hero can still correctly animate
+            // to the widget's position
             replacement: Opacity(
               opacity: 0,
               child: _addNewTagWidget(),
@@ -313,9 +312,11 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   }
 
   Widget _addNewTagWidget() {
-    return Material(
-      borderRadius: BorderRadius.circular(16),
-      child: InkResponse(
+    return Card(
+      margin: EdgeInsets.all(0),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(32))),
+      child: InkWell(
         onTap: _addNewTag,
         child: Padding(
           padding: EdgeInsets.all(2),
@@ -325,7 +326,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
               children: <Widget>[
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                  child: Text("ADD NEW TAG"),
+                  child: ClipRect(child: Text("ADD NEW TAG")),
                 ),
                 Icon(Icons.add_circle_outline)
               ],
@@ -337,13 +338,9 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   }
 
   void _addNewTag() {
-    Navigator.push(context, HeroDialogRoute(builder: (BuildContext context) {
-      return AddNewTagDialog(tale: widget.tale);
+    Navigator.push(context, HeroModalRoute(builder: (BuildContext context) {
+      return AddNewTagModal(tale: widget.tale);
     }));
-
-//    Navigator.push(context, AddNewTagDialogRoute(tale: widget.tale));
-//    Navigator.push(context, AddNewTagDialogRoute2(tale: widget.tale));
-//    Navigator.push(context, AddNewTagDialogRoute3(tale: widget.tale));
   }
 
   Widget _buildPublisherAvatar(BuildContext context) {
