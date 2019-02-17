@@ -26,7 +26,7 @@ class _AddNewTagDialogState extends State<AddNewTagDialog> {
       child: AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(32.0))),
-        contentPadding: const EdgeInsets.all(8),
+        contentPadding: EdgeInsets.all(8),
         content: Form(
           key: _formKey,
           child: TextFormField(
@@ -34,10 +34,11 @@ class _AddNewTagDialogState extends State<AddNewTagDialog> {
 //              maxLength: _maxTaleTitleLength,
               maxLengthEnforced: false,
               decoration: InputDecoration(
+                fillColor: Colors.white,
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
-                  hintText: "Impossible"),
+                  hintText: "ADD NEW TAG"),
               onSaved: (String value) {
 //                _newTale.title = value;
               },
@@ -67,6 +68,38 @@ class AddNewTagDialogRoute<T> extends PageRouteBuilder<T> {
                   animation: animation,
                   builder: (BuildContext context, Widget child) {
                     return AddNewTagDialog(tale: tale);
+                  });
+            },
+            settings: settings);
+}
+
+class AddNewTagDialogRoute2<T> extends PageRouteBuilder<T> {
+  AddNewTagDialogRoute2({@required Tale tale, RouteSettings settings})
+      : super(
+            pageBuilder: (BuildContext context, Animation<double> animation,
+                Animation<double> secondaryAnimation) {
+              return AnimatedBuilder(
+                  animation: animation,
+                  builder: (BuildContext context, Widget child) {
+                    return FadeTransition(
+                        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                        child: AddNewTagDialog(tale: tale));
+                  });
+            },
+            settings: settings);
+}
+
+class AddNewTagDialogRoute3<T> extends PageRouteBuilder<T> {
+  AddNewTagDialogRoute3({@required Tale tale, RouteSettings settings})
+      : super(
+            pageBuilder: (BuildContext context, Animation<double> animation,
+                Animation<double> secondaryAnimation) {
+              return AnimatedBuilder(
+                  animation: animation,
+                  builder: (BuildContext context, Widget child) {
+                    return FadeTransition(
+                        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                        child: child);
                   });
             },
             settings: settings);

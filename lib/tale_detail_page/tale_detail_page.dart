@@ -25,6 +25,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   User _publisher;
   bool _loadingPublisher = true;
   User _lastModifiedUser;
+  bool _showAddNewTagWidget = true;
 
   //Services
   final TaleService _taleService = TaleService.instance;
@@ -260,36 +261,89 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
       );
     }).toList();
 
+//    tagChips.add(Hero(
+//        tag: "${_tagHeroChip}new",
+//        child: Chip(
+//            onDeleted: _addNewTag,
+//            deleteIcon: Icon(Icons.add_circle_outline),
+//            backgroundColor: Theme.of(context).canvasColor,
+//            label: Text("ADD NEW TAG"))));
+
     tagChips.add(Hero(
-      tag: "${_tagHeroChip}new",
-      child: Material(
-        borderRadius: BorderRadius.circular(16),
-        child: InkResponse(
-          onTap: _addNewTag,
-          child: Padding(
-            padding: EdgeInsets.all(2),
-            child: Container(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                    child: Text("ADD NEW TAG"),
-                  ),
-                  Icon(Icons.add_circle_outline)
-                ],
-              ),
+        flightShuttleBuilder: (
+          BuildContext flightContext,
+          Animation<double> animation,
+          HeroFlightDirection flightDirection,
+          BuildContext fromHeroContext,
+          BuildContext toHeroContext,
+        ) {
+          animation.addStatusListener((AnimationStatus status) {
+            if (AnimationStatus.dismissed == status) {
+              setState(() {
+                _showAddNewTagWidget = true;
+              });
+            } else if (AnimationStatus.completed == status) {
+              setState(() {
+                _showAddNewTagWidget = false;
+              });
+            }
+          });
+
+          final Hero toHero = toHeroContext.widget;
+
+          if (flightDirection == HeroFlightDirection.push) {
+            return toHero.child;
+          } else {
+            return Center(child: _addNewTagWidget());
+//            return _addNewTagWidget();
+//            return Center(child: toHero.child);
+//            return toHero.child;
+          }
+        },
+        tag: "${_tagHeroChip}new",
+        child: Visibility(
+            replacement: Opacity(
+              opacity: 0,
+              child: _addNewTagWidget(),
             ),
-          ),
-        ),
-      ),
-    ));
+            visible: _showAddNewTagWidget,
+            child: _addNewTagWidget())));
 
     return tagChips;
   }
 
+  Widget _addNewTagWidget() {
+    return Material(
+      borderRadius: BorderRadius.circular(16),
+      child: InkResponse(
+        onTap: _addNewTag,
+        child: Padding(
+          padding: EdgeInsets.all(2),
+          child: Container(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                  child: Text("ADD NEW TAG"),
+                ),
+                Icon(Icons.add_circle_outline)
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _addNewTag() {
-    Navigator.push(context, AddNewTagDialogRoute(tale: widget.tale));
+    Navigator.push(context, HeroDialogRoute(builder: (BuildContext context) {
+      return AddNewTagDialog(tale: widget.tale);
+    }));
+
+//    Navigator.push(context, AddNewTagDialogRoute(tale: widget.tale));
+//    Navigator.push(context, AddNewTagDialogRoute2(tale: widget.tale));
+//    Navigator.push(context, AddNewTagDialogRoute3(tale: widget.tale));
   }
 
   Widget _buildPublisherAvatar(BuildContext context) {
