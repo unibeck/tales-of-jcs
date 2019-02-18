@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
+import 'package:tales_of_jcs/services/tale/tale_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
 
 class AddNewTagModal extends StatefulWidget {
@@ -14,7 +15,12 @@ class AddNewTagModal extends StatefulWidget {
 class _AddNewTagModalState extends State<AddNewTagModal> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+  bool _showUpdatingProgressIndicator = false;
   bool _hasError = false;
+  String _newTagStr;
+
+  //Services
+  final TaleService _taleService = TaleService.instance;
 
   @override
   void initState() {
@@ -27,6 +33,8 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
     if (_hasError) {
       paddingAtTopAndBottomOfCard = 16;
     }
+
+    Widget formActionWidget = _getFormActionWidget();
 
     return Padding(
       padding: EdgeInsets.all(32),
@@ -58,7 +66,7 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
                                   errorBorder: InputBorder.none,
                                   hintText: "ADD NEW TAG"),
                               onSaved: (String value) {
-                                value = value.trim();
+                                _newTagStr = value.trim();
                               },
                               validator: (String value) {
                                 if (value == null || value.isEmpty) {
@@ -70,7 +78,9 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
 
                                 value = value.trim();
 
-                                if (value.split(" ").length != 1) {
+                                if (value
+                                    .split(" ")
+                                    .length != 1) {
                                   setState(() {
                                     _hasError = true;
                                   });
@@ -90,14 +100,7 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
                               }),
                         ),
                       ),
-                      FloatingActionButton(
-                        heroTag: TagModalManifest.getNewChipAddIconHeroTag(),
-                        elevation: 3,
-                        backgroundColor: Colors.green,
-                        mini: true,
-                        onPressed: _onFormSubmit,
-                        child: Icon(Icons.add),
-                      )
+                      formActionWidget
                     ],
                   ),
                 ),
@@ -109,9 +112,43 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
     );
   }
 
+  Widget _getFormActionWidget() {
+    if (_showUpdatingProgressIndicator) {
+      return CircularProgressIndicator();
+    } else {
+      return FloatingActionButton(
+        heroTag: TagModalManifest.getNewChipAddIconHeroTag(),
+        elevation: 3,
+        backgroundColor: Colors.green,
+        mini: true,
+        onPressed: _onFormSubmit,
+        child: Icon(Icons.add),
+      );
+    }
+  }
+
   void _onFormSubmit() async {
     if (_formKey.currentState.validate()) {
       _formKey.currentState.save();
+
+      Future<void> updateTaleFuture = _taleService.addTagToTale(
+          widget.tale, _newTagStr);
+      setState(() {
+        _showUpdatingProgressIndicator = true;
+      });
+
+      updateTaleFuture.whenComplete(() {
+        Navigator.of(context).pop();
+        Scaffold.of(context).showSnackBar(SnackBar(content: Text("Added $_newTagStr!")));
+
+        //Reset the form's state
+        setState(() {
+          _formKey.currentState.reset();
+        });
+      }).catchError((error) {
+        Navigator.of(context).pop();
+        Scaffold.of(context).showSnackBar(SnackBar(content: Text("Failed updating tale, please try again")));
+      });
     }
   }
 }

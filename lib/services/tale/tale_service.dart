@@ -6,7 +6,9 @@ import 'package:tales_of_jcs/models/tale/tale.dart';
 class TaleService {
   //Singleton
   TaleService._internal();
+
   static final TaleService _instance = TaleService._internal();
+
   static TaleService get instance {
     return _instance;
   }
@@ -25,6 +27,29 @@ class TaleService {
     });
 
     return _firestore.collection(_talesCollection).document().setData(taleMap);
+  }
+
+  Future<void> addTagToTale(Tale tale, String tag) {
+    final TransactionHandler updateTransaction = (Transaction tx) async {
+      tale.tags.add(tag);
+
+      //Make sure the tale still exists before we update it
+      DocumentSnapshot taleSnapshot = await tx.get(tale.reference);
+      if (taleSnapshot.exists) {
+        await tx.update(tale.reference, tale.toMap());
+        return {"updated": true};
+      }
+
+      return {"updated": false};
+    };
+
+    return _firestore
+        .runTransaction(updateTransaction)
+        .then((result) => result["updated"])
+        .catchError((error) {
+      print("error: $error");
+      return false;
+    });
   }
 
 //  final StreamController<List<Tale>> _onNotificationsUpdate =
