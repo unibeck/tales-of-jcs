@@ -1,25 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-
 import 'package:dynamic_theme/dynamic_theme.dart';
+import 'package:flutter/material.dart';
 import 'package:hexagonal_grid_widget/hex_grid_context.dart';
 import 'package:hexagonal_grid_widget/hex_grid_widget.dart';
 import 'package:tales_of_jcs/home_page/add_tale_view/add_tale_view.dart';
-
 import 'package:tales_of_jcs/home_page/tale_hex_grid_view/tale_hex_grid_child.dart';
 import 'package:tales_of_jcs/home_page/tale_list_view/tale_list_widget.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
+import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/tale_detail_page.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key}) : super(key: key);
 
+  static const String routeName = "/HomePage";
+
   @override
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with RouteAware {
   //Constants
   final double _minHexWidgetSize = 24;
   final double _maxHexWidgetSize = 128;
@@ -58,6 +59,28 @@ class _HomePageState extends State<HomePage> {
           onSelected: (context) {
             return Navigator.pushReplacementNamed(context, 'splash');
           }));
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    FirebaseAnalyticsService.observer.subscribe(this, ModalRoute.of(context));
+  }
+
+  @override
+  void dispose() {
+    FirebaseAnalyticsService.observer.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPush() {
+    _sendCurrentTabToAnalytics();
+  }
+
+  @override
+  void didPopNext() {
+    _sendCurrentTabToAnalytics();
   }
 
   @override
@@ -113,7 +136,16 @@ class _HomePageState extends State<HomePage> {
     } else if (_currentIndex == 2) {
       _mainViewWidget = _getAddTaleView();
     } else {
-      //TODO: log error
+      FirebaseAnalyticsService.analytics.logEvent(
+          name: "home_page_main_view_out_of_bounds",
+          parameters: {
+            "index": _currentIndex,
+//              "userReference": _userService.getCurrentUser().reference
+          });
+
+      //Should never get here, but lets default to hex view
+      _currentIndex = 0;
+      _mainViewWidget = _getTaleHexGridView();
     }
   }
 
@@ -125,9 +157,8 @@ class _HomePageState extends State<HomePage> {
           return Center(child: CircularProgressIndicator());
 
         return HexGridWidget(
-            children:
-                snapshot.data.documents.map((DocumentSnapshot docSnapshot) {
-              final Tale tale = Tale.fromSnapshot(docSnapshot);
+            children: snapshot.data.documents.map((DocumentSnapshot snapshot) {
+              final Tale tale = Tale.fromSnapshot(snapshot);
               return TaleHexGridChild(
                   tale: tale,
                   onTap: () {
@@ -163,6 +194,12 @@ class _HomePageState extends State<HomePage> {
 
   Widget _getAddTaleView() {
     return AddTaleWidget();
+  }
+
+  void _sendCurrentTabToAnalytics() {
+    FirebaseAnalyticsService.analytics.setCurrentScreen(
+      screenName: "${HomePage.routeName}/tab$_currentIndex",
+    );
   }
 }
 

@@ -29,22 +29,27 @@ class TaleService {
     return _firestore.collection(_talesCollection).document().setData(taleMap);
   }
 
-  Future<void> addTagToTale(Tale tale, String tag) {
-    final TransactionHandler updateTransaction = (Transaction tx) async {
-      tale.tags.add(tag);
+  Future<void> addTagToTale(Tale tale, String tag) async {
+    List<String> newTagList = List.from(tale.tags)..add(tag);
 
+    return tale.reference.updateData(<String, dynamic>{"tags": newTagList});
+  }
+
+  //Transaction version of adding a tag to a tale. Though this is currently
+  // broken in the cloud_firestore library
+  Future<bool> addTagToTaleTX(Tale tale, String tag) async {
+    List<String> newTagList = List.from(tale.tags)..add(tag);
+
+    return Firestore.instance.runTransaction((Transaction tx) async {
       //Make sure the tale still exists before we update it
       DocumentSnapshot taleSnapshot = await tx.get(tale.reference);
       if (taleSnapshot.exists) {
-        await tx.update(tale.reference, tale.toMap());
+        await tx.update(tale.reference, <String, dynamic>{"tags": newTagList});
         return {"updated": true};
       }
 
       return {"updated": false};
-    };
-
-    return _firestore
-        .runTransaction(updateTransaction)
+    })
         .then((result) => result["updated"])
         .catchError((error) {
       print("error: $error");

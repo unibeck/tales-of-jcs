@@ -3,9 +3,13 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:tales_of_jcs/home_page/home_page.dart';
 import 'package:tales_of_jcs/utils/primary_app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
+
+  static const String routeName = "/SplashScreen";
+
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }
@@ -45,7 +49,7 @@ class _SplashScreenState extends State<SplashScreen>
         Duration(
             milliseconds: _jcsAnimationDurationInMilliSecs +
                 _pauseAfterJCSAnimationInMilliSecs), () {
-      return Navigator.pushReplacementNamed(context, 'home');
+      return Navigator.pushReplacementNamed(context, HomePage.routeName);
     });
   }
 

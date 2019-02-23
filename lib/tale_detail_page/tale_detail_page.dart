@@ -9,6 +9,9 @@ import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hero_modal_route.dart';
 
 class TaleDetailPage extends StatefulWidget {
+
+  static const String routeName = "/TaleDetailPage";
+
   TaleDetailPage({Key key, @required this.tale}) : super(key: key);
 
   final Tale tale;
@@ -25,6 +28,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   bool _loadingPublisher = true;
   User _lastModifiedUser;
   bool _showAddNewTagWidget = true;
+  Animation<double> _newChipAnimation;
 
   //Services
   final TaleService _taleService = TaleService.instance;
@@ -37,6 +41,12 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     _setRatingAverageAndCount();
     _setPublisher();
     _setLastModifiedUser();
+  }
+
+  @override
+  void dispose() {
+    _newChipAnimation?.removeStatusListener(_newChipAnimationListener);
+    super.dispose();
   }
 
   @override
@@ -54,7 +64,6 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
           backgroundColor: Theme.of(context).primaryColorDark,
         ),
         body: Container(
-//          constraints: BoxConstraints.expand(),
           color: Theme.of(context).primaryColorDark,
           child: Stack(children: <Widget>[
             ListView(children: <Widget>[
@@ -68,6 +77,10 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                     tag: "${widget.tale.reference.documentID}_title"),
               ),
               ListTile(
+                //TODO: this causes a small overflow during animating into this
+                // widget. "A RenderFlex overflowed by 0.787 pixels on the right"
+                // This should be fine as it's not noticeable so early into the
+                // animation and is small
                 title: Row(
                   children: <Widget>[
                     Icon(
@@ -270,19 +283,12 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
           BuildContext fromHeroContext,
           BuildContext toHeroContext,
         ) {
+          _newChipAnimation?.removeStatusListener(_newChipAnimationListener);
+          _newChipAnimation = animation;
+
           //Manage the visibility of the add tag widget to keep the widget
           // hidden when we're animating and using the add tag modal
-          animation.addStatusListener((AnimationStatus status) {
-            if (AnimationStatus.dismissed == status) {
-              setState(() {
-                _showAddNewTagWidget = true;
-              });
-            } else if (AnimationStatus.completed == status) {
-              setState(() {
-                _showAddNewTagWidget = false;
-              });
-            }
-          });
+          _newChipAnimation.addStatusListener(_newChipAnimationListener);
 
           if (flightDirection == HeroFlightDirection.push) {
             final Hero toHero = toHeroContext.widget;
@@ -310,6 +316,18 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     return tagChips;
   }
 
+  void _newChipAnimationListener(AnimationStatus status) {
+    if (AnimationStatus.dismissed == status) {
+      setState(() {
+        _showAddNewTagWidget = true;
+      });
+    } else if (AnimationStatus.completed == status) {
+      setState(() {
+        _showAddNewTagWidget = false;
+      });
+    }
+  }
+
   Widget _addNewTagWidget(bool withAddTag, bool withAddTagAsHero) {
     return Card(
       margin: EdgeInsets.all(0),
@@ -319,25 +337,23 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
         onTap: _addNewTag,
         child: Padding(
           padding: EdgeInsets.all(2),
-          child: Container(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: List.unmodifiable(() sync* {
-                yield Padding(
-                  padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                  child: Text("ADD NEW TAG"),
-                );
-                if (withAddTag) {
-                  if (withAddTagAsHero) {
-                    yield Hero(
-                        tag: TagModalManifest.getNewChipAddIconHeroTag(),
-                        child: Icon(Icons.add_circle_outline));
-                  } else {
-                    yield Icon(Icons.add_circle_outline);
-                  }
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.unmodifiable(() sync* {
+              yield Padding(
+                padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                child: Text("ADD NEW TAG"),
+              );
+              if (withAddTag) {
+                if (withAddTagAsHero) {
+                  yield Hero(
+                      tag: TagModalManifest.getNewChipAddIconHeroTag(),
+                      child: Icon(Icons.add_circle_outline));
+                } else {
+                  yield Icon(Icons.add_circle_outline);
                 }
-              }()),
-            ),
+              }
+            }()),
           ),
         ),
       ),
@@ -368,15 +384,16 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
 }
 
 class TaleDetailPageRoute<T> extends PageRouteBuilder<T> {
-  TaleDetailPageRoute({@required Tale tale, RouteSettings settings})
+  TaleDetailPageRoute({@required Tale tale})
       : super(
-            pageBuilder: (BuildContext context, Animation<double> animation,
-                Animation<double> secondaryAnimation) {
-              return AnimatedBuilder(
-                  animation: animation,
-                  builder: (BuildContext context, Widget child) {
-                    return TaleDetailPage(tale: tale);
-                  });
-            },
-            settings: settings);
+          pageBuilder: (BuildContext context, Animation<double> animation,
+              Animation<double> secondaryAnimation) {
+            return AnimatedBuilder(
+                animation: animation,
+                builder: (BuildContext context, Widget child) {
+                  return TaleDetailPage(tale: tale);
+                });
+          },
+          settings: RouteSettings(name: "${TaleDetailPage.routeName}/bubble"),
+        );
 }

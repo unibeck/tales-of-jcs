@@ -60,6 +60,7 @@ class _TaleListWidgetState extends State<TaleListWidget> {
         return Navigator.push(
           context,
           MaterialPageRoute(
+            settings: RouteSettings(name: "${TaleDetailPage.routeName}/bubble"),
             builder: (context) => TaleDetailPage(tale: widget.tale),
           ),
         );

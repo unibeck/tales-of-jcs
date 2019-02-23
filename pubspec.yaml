@@ -22,7 +22,8 @@ dependencies:
   hexagonal_grid_widget: ^1.0.1
   hexagonal_grid: ^1.0.4
   cupertino_icons: ^0.1.2
-  cloud_firestore: ^0.9.0+2
+  cloud_firestore: ^0.9.5+1
+  firebase_analytics: ^2.0.2+1
   fluro: ^1.4.0
 
 dev_dependencies:
