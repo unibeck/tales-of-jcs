@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "64796647970",
+    "firebase_url": "https://tales-of-jcs.firebaseio.com",
+    "project_id": "tales-of-jcs",
+    "storage_bucket": "tales-of-jcs.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:64796647970:android:59ea8831b1ba0169",
+        "android_client_info": {
+          "package_name": "com.jonbeckman.talesofjcs"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "64796647970-c327o8lbjhaorhrjepaugr22edm85t04.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJxAFHUTmh9FixhsL183Y0Rkov8HsmYFI"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
