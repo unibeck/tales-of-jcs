@@ -19,28 +19,28 @@ class Tale {
   Tale();
 
   Tale.fromMap(Map<String, dynamic> map, {this.reference})
-      : title = map['title'],
-        story = map['story'],
-        publisher = map['publisher'],
-        ratings = map['rating'],
-        readBy = map['readBy']?.cast<DocumentReference>(),
-        jcsVerified = map['jcsVerified'],
-        tags = map['tags']?.cast<String>(),
-        dateCreated = map['dateCreated'],
-        dateLastModified = map['dateLastModified'];
+      : title = map["title"],
+        story = map["story"],
+        publisher = map["publisher"],
+        ratings = map["rating"],
+        readBy = map["readBy"]?.cast<DocumentReference>(),
+        jcsVerified = map["jcsVerified"],
+        tags = map["tags"]?.cast<String>(),
+        dateCreated = map["dateCreated"],
+        dateLastModified = map["dateLastModified"];
 
   Tale.fromSnapshot(DocumentSnapshot snapshot)
       : this.fromMap(snapshot.data, reference: snapshot.reference);
 
   Map<String, dynamic> toMap() => {
-        'title': title,
-        'story': story,
-        'publisher': publisher,
-        'rating': ratings,
-        'readBy': readBy,
-        'jcsVerified': jcsVerified,
-        'tags': tags,
-        'dateCreated': dateCreated,
-        'dateLastModified': dateLastModified,
+        "title": title,
+        "story": story,
+        "publisher": publisher,
+        "rating": ratings,
+        "readBy": readBy,
+        "jcsVerified": jcsVerified,
+        "tags": tags,
+        "dateCreated": dateCreated,
+        "dateLastModified": dateLastModified,
       };
 }
