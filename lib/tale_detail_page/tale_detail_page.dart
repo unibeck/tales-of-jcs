@@ -28,7 +28,8 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   double _averageRating;
   int _ratingCount;
   User _publisher;
-  bool _loadingPublisher = true;
+  bool _loadingPublisher = false;
+  bool _loadingLastModifiedUser = false;
   User _lastModifiedUser;
   bool _showAddNewTagWidget = true;
   Animation<double> _newChipAnimation;
@@ -42,10 +43,6 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
 
     //Init models
     _setRatingAverageAndCount();
-
-    //TODO: Make this lazy initialized
-    _setPublisher();
-    _setLastModifiedUser();
   }
 
   @override
@@ -126,6 +123,12 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                   child: Padding(
                     padding: EdgeInsets.all(16),
                     child: CustomExpansionTile(
+                      onExpansionChanged: (bool isOpening) {
+                        if (isOpening) {
+                          _setPublisher();
+                          _setLastModifiedUser();
+                        }
+                      },
                       iconColor: Colors.white,
                       title: Text(
                         "${widget.tale.story}",
@@ -192,7 +195,9 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                   .body1
                   .copyWith(color: Colors.white))));
     } else if (_loadingPublisher) {
-      storyCardContent.add(Text("Loading original publisher"));
+      storyCardContent.add(Text("Loading original publisher",
+          style:
+              Theme.of(context).textTheme.body1.copyWith(color: Colors.white)));
     }
 
     if (widget.tale.dateLastModified != null && _lastModifiedUser != null) {
@@ -210,6 +215,10 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                   .textTheme
                   .body1
                   .copyWith(color: Colors.white))));
+    } else if (_loadingLastModifiedUser) {
+      storyCardContent.add(Text("Loading last editor",
+          style:
+              Theme.of(context).textTheme.body1.copyWith(color: Colors.white)));
     }
 
     storyCardContent.add(ButtonTheme.bar(
@@ -247,16 +256,20 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   }
 
   void _setPublisher() {
+    if (_publisher != null) {
+      return;
+    }
+
     if (widget.tale.publisher == null) {
       setState(() {
         _loadingPublisher = false;
       });
       return;
+    } else {
+      setState(() {
+        _loadingPublisher = true;
+      });
     }
-
-    setState(() {
-      _loadingPublisher = true;
-    });
 
     widget.tale.publisher.get().then((DocumentSnapshot snapshot) {
       setState(() {
@@ -271,15 +284,32 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     });
   }
 
-  void _setLastModifiedUser() async {
-    if (widget.tale.lastModifiedUser == null) {
+  void _setLastModifiedUser() {
+    if (_lastModifiedUser != null) {
       return;
     }
 
-    User lastModifiedUser =
-        User.fromSnapshot(await widget.tale.lastModifiedUser.get());
-    setState(() {
-      _lastModifiedUser = lastModifiedUser;
+    if (widget.tale.lastModifiedUser == null) {
+      setState(() {
+        _loadingLastModifiedUser = false;
+      });
+      return;
+    } else {
+      setState(() {
+        _loadingLastModifiedUser = true;
+      });
+    }
+
+    widget.tale.lastModifiedUser.get().then((DocumentSnapshot snapshot) {
+      setState(() {
+        _lastModifiedUser = User.fromSnapshot(snapshot);
+        _loadingLastModifiedUser = false;
+      });
+    }).catchError((err) {
+      print(err);
+      setState(() {
+        _loadingLastModifiedUser = false;
+      });
     });
   }
 
@@ -356,7 +386,8 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     }
   }
 
-  Widget _addNewTagWidget(BuildContext context, bool withAddTag, bool withAddTagAsHero) {
+  Widget _addNewTagWidget(
+      BuildContext context, bool withAddTag, bool withAddTagAsHero) {
     return Card(
       color: Theme.of(context).primaryColorLight,
       margin: EdgeInsets.all(0),
