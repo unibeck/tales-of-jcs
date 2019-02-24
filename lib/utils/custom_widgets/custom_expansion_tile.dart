@@ -150,14 +150,13 @@ class _ExpansionTileState extends State<CustomExpansionTile>
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
+          padding: EdgeInsets.only(top: 4),
           child: widget.trailing ??
               RotationTransition(
                 turns: _iconTurns,
-                child: InkResponse(
-                  onTap: _handleTap,
-                  radius: 24,
-                  child: Icon(
+                child: IconButton(
+                  onPressed: _handleTap,
+                  icon: Icon(
                     Icons.expand_more,
                     color: widget.iconColor ?? Colors.black,
                   ),
