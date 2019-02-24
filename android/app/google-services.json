@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "64796647970-5tohug9u9291lmlkf05pi9qb4qd2dfd0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jonbeckman.talesofjcs",
+            "certificate_hash": "2458b7faf55229b428d70336c0da6c7c42119cf8"
+          }
+        },
+        {
           "client_id": "64796647970-c327o8lbjhaorhrjepaugr22edm85t04.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,8 +37,20 @@
           "status": 1
         },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "64796647970-c327o8lbjhaorhrjepaugr22edm85t04.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "64796647970-bmdve3tmc3l9n9gdjqhit8pgbdq5no8b.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.jonbeckman.talesofjcs"
+              }
+            }
+          ]
         },
         "ads_service": {
           "status": 2

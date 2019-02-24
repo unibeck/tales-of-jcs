@@ -7,7 +7,6 @@ import 'package:tales_of_jcs/home_page/home_page.dart';
 import 'package:tales_of_jcs/utils/primary_app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
-
   static const String routeName = "/SplashScreen";
 
   @override
@@ -21,6 +20,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   AnimationController _controller;
   Animation<double> _jcsMovementAnimation;
+  Timer _splashScreenTimer;
 
   @override
   void initState() {
@@ -29,11 +29,11 @@ class _SplashScreenState extends State<SplashScreen>
     //Only runs in debug mode, to help with quicker development
     assert(() {
       _jcsAnimationDurationInMilliSecs = 10;
-      _pauseAfterJCSAnimationInMilliSecs = 10;
+      _pauseAfterJCSAnimationInMilliSecs = 10000000;
       return true;
     }());
 
-    _controller = new AnimationController(
+    _controller = AnimationController(
       duration: Duration(milliseconds: _jcsAnimationDurationInMilliSecs),
       vsync: this,
     );
@@ -42,10 +42,9 @@ class _SplashScreenState extends State<SplashScreen>
           ..addListener(() {
             setState(() {});
           });
-
     _controller.forward();
 
-    Timer(
+    _splashScreenTimer = Timer(
         Duration(
             milliseconds: _jcsAnimationDurationInMilliSecs +
                 _pauseAfterJCSAnimationInMilliSecs), () {
@@ -55,14 +54,16 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    super.dispose();
     _controller?.dispose();
+    _splashScreenTimer?.cancel();
+
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: CustomPaint(
+    return Scaffold(
+      body: CustomPaint(
         painter: SplashScreenPainter(),
         child: Stack(
           children: <Widget>[
@@ -70,12 +71,57 @@ class _SplashScreenState extends State<SplashScreen>
                 alignment: Alignment.topCenter,
                 child: Padding(
                   padding: EdgeInsets.only(top: 96),
-                  child: Text(
-                    "Tales of JCS",
-                    style: Theme.of(context).textTheme.headline.copyWith(
-                        color: Colors.white,
-                        fontSize: 48,
-                        fontFamily: "Roboto"),
+                  child: Column(
+                    children: <Widget>[
+                      Text(
+                        "Tales of JCS",
+                        style: Theme.of(context).textTheme.headline.copyWith(
+                            color: Colors.white,
+                            fontSize: 48,
+                            fontFamily: "Roboto"),
+                      ),
+                      Container(
+                        height: 48,
+                        margin: EdgeInsets.only(top: 64),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: <BoxShadow>[
+                              BoxShadow(
+                                  color: PrimaryAppTheme
+                                      .accentYaleColorSwatch.shade300,
+                                  offset: Offset(0, 8),
+                                  blurRadius: 16,
+                                  spreadRadius: -2),
+                            ],
+                            gradient: LinearGradient(
+                              colors: [
+                                PrimaryAppTheme.accentYaleColorSwatch.shade900,
+                                PrimaryAppTheme.accentYaleColorSwatch.shade300,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )),
+                        child: RawMaterialButton(
+                          highlightColor:
+                              PrimaryAppTheme.accentYaleColorSwatch.shade500,
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          onPressed: () {},
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                                vertical: 8, horizontal: 36),
+                            child: Text(
+                              "LOGIN",
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontFamily: "Roboto"),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 )),
             FutureBuilder(
