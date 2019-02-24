@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
+import 'package:tales_of_jcs/services/auth/auth_service.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 
 class AddTaleWidget extends StatefulWidget {
@@ -24,6 +27,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
 
   //Services
   final TaleService _taleService = TaleService.instance;
+  final AuthService _authService = AuthService.instance;
 
   @override
   void initState() {
@@ -185,16 +189,16 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                       Expanded(
                         flex: 2,
                         child: IconButton(
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 17),
-                            icon: const Icon(Icons.add_circle_outline),
+                            icon: Icon(Icons.add_circle_outline),
                             onPressed: _handleAddTagAction),
                       ),
                     ]),
               ),
               ListTile(
                 contentPadding:
-                    const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                    EdgeInsets.only(bottom: 72, left: 16, right: 16),
                 title: Wrap(
                   spacing: 8,
                   children: _tagChipWidgets.values.toList(),
@@ -229,9 +233,10 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
 
       _formKey.currentState.save();
 
-      //TODO: Add publisher information, need user/auth service first
+      _newTale.publisher = await _authService.getCurrentUserDocRef();
 
-      Future<void> createTaleFuture = _taleService.createTale(_newTale);
+      Future<void> createTaleFuture =
+          _taleService.createTale(_newTale);
       _showIndeterminateProgressDialog();
 
       createTaleFuture.whenComplete(() {

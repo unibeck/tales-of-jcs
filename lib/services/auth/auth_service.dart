@@ -10,14 +10,14 @@ class AuthService {
   AuthService._internal() {
     _authStateListener();
   }
-
   static final AuthService _instance = AuthService._internal();
-
   static AuthService get instance {
     return _instance;
   }
 
   static final Firestore _firestore = Firestore.instance;
+  static final String _usersCollection = "users";
+
   static final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   static final GoogleSignIn _googleSignIn = GoogleSignIn();
 
@@ -47,6 +47,11 @@ class AuthService {
 
   Future<FirebaseUser> getCurrentUser() async {
     return await _firebaseAuth.currentUser();
+  }
+
+  Future<DocumentReference> getCurrentUserDocRef() async {
+    FirebaseUser user = await _firebaseAuth.currentUser();
+    return _firestore.document("$_usersCollection/${user.uid}");
   }
 
   Future<void> signOut() async {

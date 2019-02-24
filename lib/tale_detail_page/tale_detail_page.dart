@@ -1,12 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/user/user.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/add_new_tag_modal.dart';
 import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/custom_expansion_tile.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hero_modal_route.dart';
+import 'package:tales_of_jcs/utils/primary_app_theme.dart';
 
 class TaleDetailPage extends StatefulWidget {
   static const String routeName = "/TaleDetailPage";
@@ -38,6 +41,8 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
 
     //Init models
     _setRatingAverageAndCount();
+
+    //TODO: Make this lazy initialized
     _setPublisher();
     _setLastModifiedUser();
   }
@@ -115,16 +120,28 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 title: Card(
+                  elevation: 0,
                   margin: EdgeInsets.all(0),
-                  color: Theme.of(context).canvasColor,
+//                  color: Theme.of(context).canvasColor,
+                  color: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(Radius.circular(12)),
                   ),
                   child: Padding(
-                    padding: EdgeInsets.all(4),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: _buildStoryCardContent(),
+                    padding: EdgeInsets.all(16),
+                    child: CustomExpansionTile(
+                      iconColor: Colors.white,
+                      title: Text(
+//                        "hey",
+//                          textAlign: TextAlign.left,
+                        "${widget.tale.story}",
+                        style: Theme.of(context)
+                            .textTheme
+                            .subhead
+                            .copyWith(color: Colors.white),
+//                        style: TextStyle(color: Colors.white),
+                      ),
+                      children: _additionalStoryContent(),
                     ),
                   ),
                 ),
@@ -147,8 +164,9 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
                     RaisedButton(
-//                      color: Colors.white,
-                      onPressed: () {},
+                      onPressed: () {
+//                        _taleService.updateAllTales();
+                      },
                       child: Text("Rate"),
                     ),
                   ],
@@ -165,45 +183,43 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     return MaterialRectCenterArcTween(begin: begin, end: end);
   }
 
-  List<Widget> _buildStoryCardContent() {
-    List<Widget> storyCardContent = [
-      ListTile(
-        title: Text("${widget.tale.story}"),
-      ),
-    ];
+  List<Widget> _additionalStoryContent() {
+    List<Widget> storyCardContent = [];
 
     if (_publisher != null) {
-      storyCardContent
-          .add(Text("Original story published by ${_publisher.name}"));
+      storyCardContent.add(ListTile(
+//          leading: ,
+          title: Text("Original story published by ${_publisher.name}")));
     } else if (_loadingPublisher) {
       storyCardContent.add(Text("Loading original publisher"));
     }
 
     if (widget.tale.dateLastModified != null && _lastModifiedUser != null) {
+      DateFormat formatter = DateFormat.yMMMMd("en_US");
+      String formattedLastModifiedDate =
+          formatter.format(widget.tale.dateLastModified);
+
       storyCardContent.add(Text(
-          "Last modified by ${_publisher.name} on ${widget.tale.dateLastModified.toString()}"));
+          "Last modified by ${_lastModifiedUser.name} on $formattedLastModifiedDate"));
     }
 
-    //TODO: Build this. Only show if there are children to show
-    if (false) {
-      storyCardContent.add(ButtonTheme.bar(
-        // make buttons use the appropriate styles for cards
-        child: ButtonBar(
-          children: <Widget>[
-            //TODO: Only show if currentUser is publisher or admin
-            FlatButton(
-              child: Text("EDIT"),
-              onPressed: () {},
-            ),
-            //TODO: Only show if currentUser is admin
-            FlatButton(
-              child: Text("APPROVE"),
-              onPressed: () {},
-            ),
-          ],
-        ),
-      ));
-    }
+    storyCardContent.add(ButtonTheme.bar(
+      // make buttons use the appropriate styles for cards
+      child: ButtonBar(
+        children: <Widget>[
+          //TODO: Only show if currentUser is publisher or admin
+          FlatButton(
+            child: Text("EDIT"),
+            onPressed: () {},
+          ),
+          //TODO: Only show if currentUser is admin
+          FlatButton(
+            child: Text("APPROVE"),
+            onPressed: () {},
+          ),
+        ],
+      ),
+    ));
 
     return storyCardContent;
   }
