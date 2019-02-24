@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/user/user.dart';
 import 'package:tales_of_jcs/tale_detail_page/tale_detail_page.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/doppelganger_avatar.dart';
 
 class TaleListWidget extends StatefulWidget {
   final GestureTapCallback onTap;
@@ -41,26 +42,14 @@ class _TaleListWidgetState extends State<TaleListWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Widget avatar;
-
-    if (_publisher == null) {
-      avatar = CircleAvatar(child: Icon(Icons.account_circle, size: 40));
-    } else if (_publisher.photoUrl == null) {
-      avatar = CircleAvatar(child: Text(_publisher.name[0]));
-    } else {
-      avatar = CircleAvatar(
-        backgroundImage: NetworkImage(_publisher.photoUrl),
-      );
-    }
-
     return ListTile(
-      leading: avatar,
+      leading: DoppelgangerAvatar.buildAvatar(context, _publisher),
       title: Text(widget.tale.title),
       onTap: () {
         return Navigator.push(
           context,
           MaterialPageRoute(
-            settings: RouteSettings(name: "${TaleDetailPage.routeName}/bubble"),
+            settings: RouteSettings(name: "${TaleDetailPage.routeName}/list"),
             builder: (context) => TaleDetailPage(tale: widget.tale),
           ),
         );

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:tales_of_jcs/models/user/user.dart';
 import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
+import 'package:tales_of_jcs/services/user/user_service.dart';
 
 class AuthService {
   //Singleton
@@ -17,9 +18,11 @@ class AuthService {
     return _instance;
   }
 
-  static final Firestore _firestore = Firestore.instance;
   static final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   static final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  static final Firestore _firestore = Firestore.instance;
+  static final UserService _userService = UserService.instance;
 
   FirebaseUser _lastKnownUser;
 
@@ -49,6 +52,11 @@ class AuthService {
     return await _firebaseAuth.currentUser();
   }
 
+  Future<DocumentReference> getCurrentUserDocRef() async {
+    FirebaseUser user = await _firebaseAuth.currentUser();
+    return _firestore.document("${UserService.usersCollection}/${user.uid}");
+  }
+
   Future<void> signOut() async {
     return _firebaseAuth.signOut();
   }
@@ -57,23 +65,15 @@ class AuthService {
     return _firebaseAuth.onAuthStateChanged;
   }
 
+  //Don't have to concern ourselves with disposing of this listener because the
+  // service will run for the entirety of the app's lifecycle
   void _authStateListener() {
     _firebaseAuth.onAuthStateChanged.listen((FirebaseUser user) {
       if (user == null) {
         if (_lastKnownUser != null) {
-          final DocumentReference userRef =
-              _firestore.document("users/${_lastKnownUser.uid}");
-
-          _firestore.runTransaction((Transaction tx) async {
-            DocumentSnapshot taleSnapshot = await tx.get(userRef);
-            if (taleSnapshot.exists) {
-              await tx.update(
-                  userRef, <String, dynamic>{"latestLogout": DateTime.now()});
-            } else {
-              await tx.set(
-                  userRef, User.fromFirebaseUser(_lastKnownUser).toMap());
-            }
-          }).catchError((error) {
+          _userService
+              .updateUserLatestLogout(_lastKnownUser)
+              .catchError((error) {
             print("Error: $error");
           });
 
@@ -82,18 +82,10 @@ class AuthService {
       } else {
         _lastKnownUser = user;
         FirebaseAnalyticsService.analytics.logLogin();
-        final DocumentReference userRef =
-            _firestore.document("users/${user.uid}");
 
-        _firestore.runTransaction((Transaction tx) async {
-          DocumentSnapshot taleSnapshot = await tx.get(userRef);
-          if (taleSnapshot.exists) {
-            await tx.update(
-                userRef, <String, dynamic>{"latestLogin": DateTime.now()});
-          } else {
-            await tx.set(userRef, User.fromFirebaseUser(user).toMap());
-          }
-        }).catchError((error) {
+        _userService
+            .updateUserLatestLogin(_lastKnownUser)
+            .catchError((error) {
           print("Error: $error");
         });
       }

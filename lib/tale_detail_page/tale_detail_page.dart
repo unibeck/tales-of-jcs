@@ -1,19 +1,26 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:tales_of_jcs/models/tale/tag.dart';
 
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/user/user.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/add_new_tag_modal.dart';
 import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/custom_expansion_tile.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/doppelganger_avatar.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hero_modal_route.dart';
+import 'package:tales_of_jcs/utils/primary_app_theme.dart';
 
 class TaleDetailPage extends StatefulWidget {
   static const String routeName = "/TaleDetailPage";
 
   TaleDetailPage({Key key, @required this.tale}) : super(key: key);
 
-  final Tale tale;
+  Tale tale;
 
   @override
   _TaleDetailPageState createState() => _TaleDetailPageState();
@@ -21,11 +28,17 @@ class TaleDetailPage extends StatefulWidget {
 
 class _TaleDetailPageState extends State<TaleDetailPage> {
   //View related
+  StreamSubscription<DocumentSnapshot> _taleSnapshotSubscription;
+  List<Tag> _tags;
+
   double _averageRating;
   int _ratingCount;
+
   User _publisher;
-  bool _loadingPublisher = true;
+  bool _loadingPublisher = false;
   User _lastModifiedUser;
+  bool _loadingLastModifiedUser = false;
+
   bool _showAddNewTagWidget = true;
   Animation<double> _newChipAnimation;
 
@@ -36,24 +49,55 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   void initState() {
     super.initState();
 
+    _taleSnapshotSubscription = widget.tale.reference
+        .snapshots()
+        .listen((DocumentSnapshot snapshot) {
+      Tale updatedTale = Tale.fromSnapshot(snapshot);
+
+      if (updatedTale.tags != null) {
+        Future.wait(
+            updatedTale.tags.map((DocumentReference reference) async {
+              DocumentSnapshot snapshot = await reference.get();
+              return Tag.fromSnapshot(snapshot);
+            })).then((List<Tag> tags) {
+          if (mounted) {
+            setState(() {
+              _publisher = null;
+              _lastModifiedUser = null;
+              _tags = tags;
+
+              widget.tale = updatedTale;
+            });
+          }
+        });
+      }
+    });
+
     //Init models
     _setRatingAverageAndCount();
-    _setPublisher();
-    _setLastModifiedUser();
+
+    if (widget.tale.tags != null) {
+      Future.wait(widget.tale.tags.map((DocumentReference reference) async {
+        DocumentSnapshot snapshot = await reference.get();
+        return Tag.fromSnapshot(snapshot);
+      })).then((List<Tag> tags) {
+        setState(() {
+          _tags = tags;
+        });
+      });
+    }
   }
 
   @override
   void dispose() {
     _newChipAnimation?.removeStatusListener(_newChipAnimationListener);
+    _taleSnapshotSubscription?.cancel();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    //Build widgets
-    List<Widget> _tagChips = _buildTagChips(context);
-    Widget avatar = _buildPublisherAvatar(context);
-
     return Hero(
       createRectTween: _createRectTween,
       tag: "${widget.tale.reference.documentID}_background",
@@ -115,16 +159,30 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 title: Card(
-                  margin: EdgeInsets.all(0),
-                  color: Theme.of(context).canvasColor,
+                  elevation: 0,
+                  margin: EdgeInsets.zero,
+                  color: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(Radius.circular(12)),
                   ),
                   child: Padding(
-                    padding: EdgeInsets.all(4),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: _buildStoryCardContent(),
+                    padding: EdgeInsets.all(16),
+                    child: CustomExpansionTile(
+                      onExpansionChanged: (bool isOpening) {
+                        if (isOpening) {
+                          _setPublisher();
+                          _setLastModifiedUser();
+                        }
+                      },
+                      iconColor: Colors.white,
+                      title: Text(
+                        "${widget.tale.story}",
+                        style: Theme.of(context)
+                            .textTheme
+                            .subhead
+                            .copyWith(color: Colors.white),
+                      ),
+                      children: _storyMetadata(context),
                     ),
                   ),
                 ),
@@ -135,7 +193,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                 title: Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
                   spacing: 8,
-                  children: _tagChips,
+                  children: _buildTagChips(context),
                 ),
               ),
             ]),
@@ -147,8 +205,9 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
                     RaisedButton(
-//                      color: Colors.white,
-                      onPressed: () {},
+                      onPressed: () {
+                        _taleService.updateAllTales();
+                      },
                       child: Text("Rate"),
                     ),
                   ],
@@ -165,45 +224,65 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     return MaterialRectCenterArcTween(begin: begin, end: end);
   }
 
-  List<Widget> _buildStoryCardContent() {
+  List<Widget> _storyMetadata(BuildContext context) {
     List<Widget> storyCardContent = [
-      ListTile(
-        title: Text("${widget.tale.story}"),
-      ),
+      Divider(color: Theme.of(context).primaryColor)
     ];
 
     if (_publisher != null) {
-      storyCardContent
-          .add(Text("Original story published by ${_publisher.name}"));
+      storyCardContent.add(ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: DoppelgangerAvatar.buildAvatar(context, _publisher,
+              accountCircleSize: 40),
+          title: Text("Original story published by ${_publisher.name}",
+              style: Theme.of(context)
+                  .textTheme
+                  .body1
+                  .copyWith(color: Colors.white))));
     } else if (_loadingPublisher) {
-      storyCardContent.add(Text("Loading original publisher"));
+      storyCardContent.add(Text("Loading original publisher",
+          style:
+              Theme.of(context).textTheme.body1.copyWith(color: Colors.white)));
     }
 
     if (widget.tale.dateLastModified != null && _lastModifiedUser != null) {
-      storyCardContent.add(Text(
-          "Last modified by ${_publisher.name} on ${widget.tale.dateLastModified.toString()}"));
+      DateFormat formatter = DateFormat.yMMMMd("en_US");
+      String formattedLastModifiedDate =
+          formatter.format(widget.tale.dateLastModified);
+
+      storyCardContent.add(ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: DoppelgangerAvatar.buildAvatar(context, _lastModifiedUser,
+              accountCircleSize: 40),
+          title: Text(
+              "Last modified by ${_lastModifiedUser.name} on $formattedLastModifiedDate",
+              style: Theme.of(context)
+                  .textTheme
+                  .body1
+                  .copyWith(color: Colors.white))));
+    } else if (_loadingLastModifiedUser) {
+      storyCardContent.add(Text("Loading last editor",
+          style:
+              Theme.of(context).textTheme.body1.copyWith(color: Colors.white)));
     }
 
-    //TODO: Build this. Only show if there are children to show
-    if (false) {
-      storyCardContent.add(ButtonTheme.bar(
-        // make buttons use the appropriate styles for cards
-        child: ButtonBar(
-          children: <Widget>[
-            //TODO: Only show if currentUser is publisher or admin
-            FlatButton(
-              child: Text("EDIT"),
-              onPressed: () {},
-            ),
-            //TODO: Only show if currentUser is admin
-            FlatButton(
-              child: Text("APPROVE"),
-              onPressed: () {},
-            ),
-          ],
-        ),
-      ));
-    }
+    storyCardContent.add(ButtonTheme.bar(
+      // make buttons use the appropriate styles for cards
+      child: ButtonBar(
+        children: <Widget>[
+          //TODO: Only show if currentUser is publisher or admin
+          FlatButton(
+            child: Text("EDIT"),
+            onPressed: () {},
+          ),
+          //TODO: Only show if currentUser is admin
+          FlatButton(
+            child: Text("APPROVE"),
+            onPressed: () {},
+          ),
+        ],
+      ),
+    ));
 
     return storyCardContent;
   }
@@ -222,16 +301,20 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   }
 
   void _setPublisher() {
+    if (_publisher != null) {
+      return;
+    }
+
     if (widget.tale.publisher == null) {
       setState(() {
         _loadingPublisher = false;
       });
       return;
+    } else {
+      setState(() {
+        _loadingPublisher = true;
+      });
     }
-
-    setState(() {
-      _loadingPublisher = true;
-    });
 
     widget.tale.publisher.get().then((DocumentSnapshot snapshot) {
       setState(() {
@@ -246,15 +329,32 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     });
   }
 
-  void _setLastModifiedUser() async {
-    if (widget.tale.lastModifiedUser == null) {
+  void _setLastModifiedUser() {
+    if (_lastModifiedUser != null) {
       return;
     }
 
-    User lastModifiedUser =
-        User.fromSnapshot(await widget.tale.lastModifiedUser.get());
-    setState(() {
-      _lastModifiedUser = lastModifiedUser;
+    if (widget.tale.lastModifiedUser == null) {
+      setState(() {
+        _loadingLastModifiedUser = false;
+      });
+      return;
+    } else {
+      setState(() {
+        _loadingLastModifiedUser = true;
+      });
+    }
+
+    widget.tale.lastModifiedUser.get().then((DocumentSnapshot snapshot) {
+      setState(() {
+        _lastModifiedUser = User.fromSnapshot(snapshot);
+        _loadingLastModifiedUser = false;
+      });
+    }).catchError((err) {
+      print(err);
+      setState(() {
+        _loadingLastModifiedUser = false;
+      });
     });
   }
 
@@ -262,16 +362,31 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     List<Widget> tagChips = List<Widget>();
 
     //Add all tags associated with the Tale
-    tagChips = widget.tale.tags.map((String tag) {
-      return Hero(
-        tag: TagModalManifest.getChipHeroTagFromTaleTag(tag),
-        child: Chip(
-          backgroundColor: Theme.of(context).canvasColor,
-          avatar: CircleAvatar(child: Icon(Icons.account_circle)),
-          label: Text(tag),
-        ),
-      );
-    }).toList();
+    if (_tags != null) {
+      tagChips = _tags.map((Tag tag) {
+        return Hero(
+          tag: TagModalManifest.getChipHeroTagFromTaleTag(tag.title),
+          child: Chip(
+            backgroundColor: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
+//            avatar: CircleAvatar(child: Text("${tag.likedByUsers.length}00")),
+            avatar: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColorDark,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Text("${tag.likedByUsers.length}00"),
+                )),
+            label: Text(tag.title,
+                style: Theme.of(context)
+                    .textTheme
+                    .body1
+                    .copyWith(color: Colors.white)),
+          ),
+        );
+      }).toList();
+    }
 
     //Add a chip for a user to add additional tags
     tagChips.add(Hero(
@@ -296,7 +411,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
             //Since the toHero.child is hidden we can't use it to animate as we
             // do in the HeroFlightDirection.push block. Instead we reproduce
             // the widget to display a visible version
-            return _addNewTagWidget(false, false);
+            return _addNewTagWidget(toHeroContext, false, false);
           }
         },
         tag: TagModalManifest.getNewChipHeroTag,
@@ -307,10 +422,10 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
             // to the widget's position
             replacement: Opacity(
               opacity: 0,
-              child: _addNewTagWidget(true, false),
+              child: _addNewTagWidget(context, true, false),
             ),
             visible: _showAddNewTagWidget,
-            child: _addNewTagWidget(true, false))));
+            child: _addNewTagWidget(context, true, false))));
 
     return tagChips;
   }
@@ -327,8 +442,10 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     }
   }
 
-  Widget _addNewTagWidget(bool withAddTag, bool withAddTagAsHero) {
+  Widget _addNewTagWidget(
+      BuildContext context, bool withAddTag, bool withAddTagAsHero) {
     return Card(
+      color: Theme.of(context).primaryColorLight,
       margin: EdgeInsets.all(0),
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(32))),
@@ -368,22 +485,6 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
             builder: (BuildContext context) {
               return AddNewTagModal(tale: widget.tale);
             }));
-  }
-
-  Widget _buildPublisherAvatar(BuildContext context) {
-    Widget avatar;
-
-    if (_publisher == null) {
-      avatar = CircleAvatar(child: Icon(Icons.account_circle, size: 40));
-    } else if (_publisher.photoUrl == null) {
-      avatar = CircleAvatar(child: Text(_publisher.name[0]));
-    } else {
-      avatar = CircleAvatar(
-        backgroundImage: NetworkImage(_publisher.photoUrl),
-      );
-    }
-
-    return avatar;
   }
 }
 

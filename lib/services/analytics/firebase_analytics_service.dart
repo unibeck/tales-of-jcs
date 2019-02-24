@@ -33,5 +33,5 @@ class FirebaseAnalyticsService {
   static FirebaseAnalyticsObserver get observer => _observer;
 
   //Services
-  static final AuthService _authService = AuthService.instance;
+  final AuthService _authService = AuthService.instance;
 }

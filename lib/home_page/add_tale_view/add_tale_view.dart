@@ -1,6 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:tales_of_jcs/models/tale/tag.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
+import 'package:tales_of_jcs/services/auth/auth_service.dart';
+import 'package:tales_of_jcs/services/tag/tag_service.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 
 class AddTaleWidget extends StatefulWidget {
@@ -20,10 +24,13 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
   TextEditingController _tagTextController;
   Map<String, Chip> _tagChipWidgets;
   Tale _newTale;
+  List<String> _newStrTags;
   VoidCallback _handleAddTagAction;
 
   //Services
   final TaleService _taleService = TaleService.instance;
+  final TagService _tagService = TagService.instance;
+  final AuthService _authService = AuthService.instance;
 
   @override
   void initState() {
@@ -50,6 +57,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
     _tagTextController = TextEditingController();
     _tagChipWidgets = {};
     _newTale = Tale();
+    _newStrTags = [];
 
     _tagTextController.addListener(() {
       setState(() {
@@ -175,7 +183,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                             //We purposely don't add `value` as a tag since the
                             // user didn't explicitly add it. There is a check
                             // later to inform the user about the WIP input
-                            _newTale.tags.addAll(_tagChipWidgets.keys);
+                            _newStrTags.addAll(_tagChipWidgets.keys);
                           },
                           validator: (String value) {
                             return _validateTagInputAndChips(value);
@@ -185,16 +193,16 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                       Expanded(
                         flex: 2,
                         child: IconButton(
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 17),
-                            icon: const Icon(Icons.add_circle_outline),
+                            icon: Icon(Icons.add_circle_outline),
                             onPressed: _handleAddTagAction),
                       ),
                     ]),
               ),
               ListTile(
                 contentPadding:
-                    const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                    EdgeInsets.only(bottom: 72, left: 16, right: 16),
                 title: Wrap(
                   spacing: 8,
                   children: _tagChipWidgets.values.toList(),
@@ -226,13 +234,24 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
         await _showWIPTagTextDialog(_tagTextController.text);
         return;
       }
-
-      _formKey.currentState.save();
-
-      //TODO: Add publisher information, need user/auth service first
-
-      Future<void> createTaleFuture = _taleService.createTale(_newTale);
+      //Let users know we started creating the tag and tale
       _showIndeterminateProgressDialog();
+
+      //Populate all data models from form
+      _formKey.currentState.save();
+      DocumentReference userRef = await _authService.getCurrentUserDocRef();
+
+      //Create necessary tags
+      List<Tag> _newTags = _newStrTags.map((String tagStr) {
+        return Tag(tagStr, [userRef]);
+      }).toList();
+      List<DocumentReference> tagRefs =
+          await _tagService.createNewTags(_newTags);
+
+      //Create new tale
+      _newTale.publisher = userRef;
+      _newTale.tags = tagRefs;
+      Future<void> createTaleFuture = _taleService.createTale(_newTale);
 
       createTaleFuture.whenComplete(() {
         Navigator.of(context).pop();

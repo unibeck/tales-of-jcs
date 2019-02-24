@@ -22,13 +22,11 @@ class User {
   User.fromSnapshot(DocumentSnapshot snapshot)
       : this.fromMap(snapshot.data, reference: snapshot.reference);
 
-  User.fromFirebaseUser(FirebaseUser fbUser)
-      : reference = null,
-        name = fbUser.displayName,
+  User.fromFirebaseUser(FirebaseUser fbUser,
+      {this.reference, this.latestLogin, this.latestLogout})
+      : name = fbUser.displayName,
         email = fbUser.email,
-        photoUrl = fbUser.photoUrl,
-        latestLogin = null,
-        latestLogout = null;
+        photoUrl = fbUser.photoUrl;
 
   Map<String, dynamic> toMap() => {
         "name": name,
