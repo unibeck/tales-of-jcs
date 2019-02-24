@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
+import 'package:tales_of_jcs/services/tag/tag_service.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
 
@@ -28,6 +29,7 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
 
   //Services
   final TaleService _taleService = TaleService.instance;
+  final TagService _tagService = TagService.instance;
 
   @override
   void initState() {
@@ -147,7 +149,7 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
       _formKey.currentState.save();
 
       Future<void> updateTaleFuture =
-          _taleService.addTagToTale(widget.tale, _newTagStr);
+          _tagService.addNewTagToTale(widget.tale, _newTagStr);
       setState(() {
         _showUpdatingProgressIndicator = true;
       });

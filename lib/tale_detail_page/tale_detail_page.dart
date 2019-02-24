@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:tales_of_jcs/models/tale/tag.dart';
 
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/user/user.dart';
@@ -17,7 +18,7 @@ class TaleDetailPage extends StatefulWidget {
 
   TaleDetailPage({Key key, @required this.tale}) : super(key: key);
 
-  final Tale tale;
+  Tale tale;
 
   @override
   _TaleDetailPageState createState() => _TaleDetailPageState();
@@ -25,12 +26,15 @@ class TaleDetailPage extends StatefulWidget {
 
 class _TaleDetailPageState extends State<TaleDetailPage> {
   //View related
+  List<Tag> _tags;
   double _averageRating;
   int _ratingCount;
+
   User _publisher;
   bool _loadingPublisher = false;
-  bool _loadingLastModifiedUser = false;
   User _lastModifiedUser;
+  bool _loadingLastModifiedUser = false;
+
   bool _showAddNewTagWidget = true;
   Animation<double> _newChipAnimation;
 
@@ -41,8 +45,41 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   void initState() {
     super.initState();
 
+    //TODO: Have to kill this listener
+    widget.tale.reference.snapshots().listen((DocumentSnapshot snapshot) async {
+      Tale updatedTale = Tale.fromSnapshot(snapshot);
+
+      if (updatedTale.tags != null) {
+        _tags = await Future.wait(
+            updatedTale.tags.map((DocumentReference reference) async {
+          DocumentSnapshot snapshot = await reference.get();
+          return Tag.fromSnapshot(snapshot);
+        }));
+      } else {
+        _tags = null;
+      }
+
+      setState(() {
+        _publisher = null;
+        _lastModifiedUser = null;
+
+        widget.tale = updatedTale;
+      });
+    });
+
     //Init models
     _setRatingAverageAndCount();
+
+    if (widget.tale.tags != null) {
+      Future.wait(widget.tale.tags.map((DocumentReference reference) async {
+        DocumentSnapshot snapshot = await reference.get();
+        return Tag.fromSnapshot(snapshot);
+      })).then((List<Tag> tags) {
+        setState(() {
+          _tags = tags;
+        });
+      });
+    }
   }
 
   @override
@@ -161,7 +198,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                   children: <Widget>[
                     RaisedButton(
                       onPressed: () {
-//                        _taleService.updateAllTales();
+                        _taleService.updateAllTales();
                       },
                       child: Text("Rate"),
                     ),
@@ -317,20 +354,31 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     List<Widget> tagChips = List<Widget>();
 
     //Add all tags associated with the Tale
-    tagChips = widget.tale.tags.map((String tag) {
-      return Hero(
-        tag: TagModalManifest.getChipHeroTagFromTaleTag(tag),
-        child: Chip(
-          backgroundColor: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
-          avatar: DoppelgangerAvatar.buildAvatar(context, null),
-          label: Text(tag,
-              style: Theme.of(context)
-                  .textTheme
-                  .body1
-                  .copyWith(color: Colors.white)),
-        ),
-      );
-    }).toList();
+    if (_tags != null) {
+      tagChips = _tags.map((Tag tag) {
+        return Hero(
+          tag: TagModalManifest.getChipHeroTagFromTaleTag(tag.title),
+          child: Chip(
+            backgroundColor: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
+//            avatar: CircleAvatar(child: Text("${tag.likedByUsers.length}00")),
+            avatar: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColorDark,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Text("${tag.likedByUsers.length}00"),
+                )),
+            label: Text(tag.title,
+                style: Theme.of(context)
+                    .textTheme
+                    .body1
+                    .copyWith(color: Colors.white)),
+          ),
+        );
+      }).toList();
+    }
 
     //Add a chip for a user to add additional tags
     tagChips.add(Hero(

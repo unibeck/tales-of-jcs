@@ -15,7 +15,9 @@ class UserService {
   }
 
   static final Firestore _firestore = Firestore.instance;
-  static final String usersCollection = "users";
+
+  static String _usersCollection = "users";
+  static String get usersCollection => _usersCollection;
 
   Future<void> retrieveUser(DocumentReference user) {}
 
