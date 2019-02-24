@@ -1,24 +1,40 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class User {
   final DocumentReference reference;
   final String name;
   final String email;
   final String photoUrl;
+  final DateTime latestLogin;
+  final DateTime latestLogout;
 
-  User(this.reference, this.name, this.email, this.photoUrl);
+  User(this.reference, this.name, this.email, this.photoUrl, this.latestLogin,
+      this.latestLogout);
 
   User.fromMap(Map<String, dynamic> map, {this.reference})
-      : name = map['name'],
-        email = map['email'],
-        photoUrl = map['photoUrl'];
+      : name = map["name"],
+        email = map["email"],
+        photoUrl = map["photoUrl"],
+        latestLogin = map["latestLogin"],
+        latestLogout = map["latestLogout"];
 
   User.fromSnapshot(DocumentSnapshot snapshot)
       : this.fromMap(snapshot.data, reference: snapshot.reference);
 
-  Map<String, dynamic> toJson() => {
-        'name': name,
-        'email': email,
-        'photoUrl': photoUrl,
+  User.fromFirebaseUser(FirebaseUser fbUser)
+      : reference = null,
+        name = fbUser.displayName,
+        email = fbUser.email,
+        photoUrl = fbUser.photoUrl,
+        latestLogin = null,
+        latestLogout = null;
+
+  Map<String, dynamic> toMap() => {
+        "name": name,
+        "email": email,
+        "photoUrl": photoUrl,
+        "latestLogin": latestLogin,
+        "latestLogout": latestLogout,
       };
 }

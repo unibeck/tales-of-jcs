@@ -52,7 +52,7 @@ class TaleService {
     })
         .then((result) => result["updated"])
         .catchError((error) {
-      print("error: $error");
+      print("Error: $error");
       return false;
     });
   }
