@@ -42,10 +42,16 @@ android {
         disable 'InvalidPackage'
     }
 
+    dependencies {
+        api 'com.google.android.gms:play-services-auth:16.0.1'
+    }
+
     defaultConfig {
         applicationId "com.jonbeckman.talesofjcs"
         minSdkVersion 16
-        targetSdkVersion 28
+        //Need targetSdkVersion 27 to prevent https://github.com/flutter/engine/pull/6985. Once this
+        // change is merged into flutter/engine stable we can update this to 28
+        targetSdkVersion 27
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -80,10 +86,10 @@ flutter {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test:runner:1.1.0-alpha4'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha4'
+    androidTestImplementation 'androidx.test:runner:1.1.2-alpha01'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.2-alpha01'
     implementation 'com.google.firebase:firebase-core:16.0.7'
-    implementation 'androidx.multidex:multidex:2.0.0'
+    implementation 'androidx.multidex:multidex:2.0.1'
 }
 
 apply plugin: 'com.google.gms.google-services'

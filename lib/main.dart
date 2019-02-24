@@ -8,6 +8,10 @@ import 'package:tales_of_jcs/splash_screen/SplashScreen.dart';
 import 'package:tales_of_jcs/utils/primary_app_theme.dart';
 
 void main() {
+  //Need to initialize the instance as soon as the app starts
+  final FirebaseAnalyticsService _analyticsService =
+      FirebaseAnalyticsService.instance;
+
   runApp(TalesOfJCSApp());
 }
 
@@ -26,7 +30,9 @@ class TalesOfJCSApp extends StatelessWidget {
             title: "Tales of JCS",
             home: SplashScreen(),
             onGenerateRoute: router.generator,
-            navigatorObservers: <FirebaseAnalyticsObserver>[FirebaseAnalyticsService.observer],
+            navigatorObservers: <FirebaseAnalyticsObserver>[
+              FirebaseAnalyticsService.observer
+            ],
           ),
     );
   }
@@ -41,8 +47,8 @@ class TalesOfJCSApp extends StatelessWidget {
     }));
 
     // Define our home page.
-    router.define(HomePage.routeName, transitionType: TransitionType.fadeIn, handler:
-        Handler(
+    router.define(HomePage.routeName, transitionType: TransitionType.fadeIn,
+        handler: Handler(
             handlerFunc: (BuildContext context, Map<String, dynamic> params) {
       return HomePage();
     }));

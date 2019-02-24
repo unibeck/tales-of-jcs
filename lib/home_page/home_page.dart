@@ -8,7 +8,9 @@ import 'package:tales_of_jcs/home_page/tale_hex_grid_view/tale_hex_grid_child.da
 import 'package:tales_of_jcs/home_page/tale_list_view/tale_list_widget.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
+import 'package:tales_of_jcs/services/auth/auth_service.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
+import 'package:tales_of_jcs/splash_screen/SplashScreen.dart';
 import 'package:tales_of_jcs/tale_detail_page/tale_detail_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -35,6 +37,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
 
   //Services
   final TaleService _taleService = TaleService.instance;
+  final AuthService _authService = AuthService.instance;
 
   @override
   void initState() {
@@ -57,7 +60,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
           icon: Icons.exit_to_app,
           //TODO: Make actually logout call
           onSelected: (context) {
-            return Navigator.pushReplacementNamed(context, 'splash');
+            _authService.signOut().then((_) {
+              return Navigator.pushReplacementNamed(
+                  context, SplashScreen.routeName);
+            });
           }));
   }
 
@@ -136,12 +142,11 @@ class _HomePageState extends State<HomePage> with RouteAware {
     } else if (_currentIndex == 2) {
       _mainViewWidget = _getAddTaleView();
     } else {
-      FirebaseAnalyticsService.analytics.logEvent(
-          name: "home_page_main_view_out_of_bounds",
-          parameters: {
-            "index": _currentIndex,
+      FirebaseAnalyticsService.analytics
+          .logEvent(name: "home_page_main_view_out_of_bounds", parameters: {
+        "index": _currentIndex,
 //              "userReference": _userService.getCurrentUser().reference
-          });
+      });
 
       //Should never get here, but lets default to hex view
       _currentIndex = 0;
