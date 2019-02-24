@@ -10,6 +10,7 @@ class AddNewTagModal extends StatefulWidget {
   AddNewTagModal({Key key, @required this.tale}) : super(key: key);
 
   final Tale tale;
+  static const String routeName = "/AddNewTagModal";
 
   @override
   _AddNewTagModalState createState() => _AddNewTagModalState();

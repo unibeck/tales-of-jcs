@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-///Used https://material.io/design/color/the-color-system.html#tools-for-picking-colors
-/// to determine color swatch based on Yale and Harvard school colors
+///Used https://material.io/inline-tools/color/
+/// to determine color swatch based on Yale and Harvard school colors. Also
+/// https://material.io/tools/color is useful
 class PrimaryAppTheme {
   PrimaryAppTheme._();
 
   static const int yaleBlueValue = 0xFF0f4d92;
-  static const int harvardCrimsonValue = 0xFFa51c30;
-
-  //TODO: need to create a accentYaleColorSwatch
   static const MaterialColor primaryYaleColorSwatch = MaterialColor(
     yaleBlueValue,
     const <int, Color>{
@@ -25,7 +23,24 @@ class PrimaryAppTheme {
     },
   );
 
-  //TODO: need to create a accentHarvardColorSwatch
+  static const int yaleAccentValue = 0xFFff8d00;
+  static const MaterialColor accentYaleColorSwatch = MaterialColor(
+    yaleAccentValue,
+    const <int, Color>{
+      50: const Color (0xFFfff2df),
+      100: const Color(0xFFffddb0),
+      200: const Color(0xFFffc77d),
+      300: const Color(0xFFffaf49),
+      400: const Color(0xFFff9e22),
+      500: const Color(yaleAccentValue),
+      600: const Color(0xFFfa8100),
+      700: const Color(0xFFf47100),
+      800: const Color(0xFFee6002),
+      900: const Color(0xFFe54304),
+    },
+  );
+
+  static const int harvardCrimsonValue = 0xFFa51c30;
   static const MaterialColor primaryHarvardColorSwatch = MaterialColor(
     harvardCrimsonValue,
     const <int, Color>{
@@ -41,6 +56,23 @@ class PrimaryAppTheme {
       900: const Color(harvardCrimsonValue),
     },
   );
+
+//  static const int harvardAccentValue = 0xFFa51c30;
+//  static const MaterialColor accentHarvardColorSwatch = MaterialColor(
+//    harvardAccentValue,
+//    const <int, Color>{
+//      50: const Color(0xFFfbeaef),
+//      100: const Color(0xFFf5cbd5),
+//      200: const Color(0xFFe297a1),
+//      300: const Color(0xFFd4707e),
+//      400: const Color(0xFFde4f61),
+//      500: const Color(0xFFe43b4c),
+//      600: const Color(0xFFd4334a),
+//      700: const Color(0xFFc22b42),
+//      800: const Color(0xFFb5253b),
+//      900: const Color(harvardCrimsonValue),
+//    },
+//  );
 
 //  static const Color _yaleBlueLightColor = Color(0xFF5077c2);
 //  static const Color _yaleBlueDarkColor = Color(0xFF002563);
@@ -69,13 +101,13 @@ class PrimaryAppTheme {
         cursorColor: Colors.black,
         toggleableActiveColor: Colors.black,
         inputDecorationTheme: InputDecorationTheme(
-          border: const OutlineInputBorder(
+          border: OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black),
           ),
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black.withOpacity(0.1)),
           ),
-          focusedBorder: const OutlineInputBorder(
+          focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black),
           ),
         ),

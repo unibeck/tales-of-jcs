@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 class HeroModalRoute<T> extends PageRoute<T> {
-  HeroModalRoute({this.builder}) : super();
+  HeroModalRoute({this.builder, this.settings}) : super(settings: settings);
 
   final WidgetBuilder builder;
+  final RouteSettings settings;
 
   @override
   bool get opaque => false;

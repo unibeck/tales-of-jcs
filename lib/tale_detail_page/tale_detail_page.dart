@@ -9,7 +9,6 @@ import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hero_modal_route.dart';
 
 class TaleDetailPage extends StatefulWidget {
-
   static const String routeName = "/TaleDetailPage";
 
   TaleDetailPage({Key key, @required this.tale}) : super(key: key);
@@ -361,9 +360,14 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   }
 
   void _addNewTag() {
-    Navigator.push(context, HeroModalRoute(builder: (BuildContext context) {
-      return AddNewTagModal(tale: widget.tale);
-    }));
+    Navigator.push(
+        context,
+        HeroModalRoute(
+            settings: RouteSettings(
+                name: "${TaleDetailPage.routeName}${AddNewTagModal.routeName}"),
+            builder: (BuildContext context) {
+              return AddNewTagModal(tale: widget.tale);
+            }));
   }
 
   Widget _buildPublisherAvatar(BuildContext context) {
