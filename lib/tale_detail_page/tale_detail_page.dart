@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -26,7 +28,9 @@ class TaleDetailPage extends StatefulWidget {
 
 class _TaleDetailPageState extends State<TaleDetailPage> {
   //View related
+  StreamSubscription<DocumentSnapshot> _taleSnapshotSubscription;
   List<Tag> _tags;
+
   double _averageRating;
   int _ratingCount;
 
@@ -45,26 +49,28 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   void initState() {
     super.initState();
 
-    //TODO: Have to kill this listener
-    widget.tale.reference.snapshots().listen((DocumentSnapshot snapshot) async {
+    _taleSnapshotSubscription = widget.tale.reference
+        .snapshots()
+        .listen((DocumentSnapshot snapshot) {
       Tale updatedTale = Tale.fromSnapshot(snapshot);
 
       if (updatedTale.tags != null) {
-        _tags = await Future.wait(
+        Future.wait(
             updatedTale.tags.map((DocumentReference reference) async {
-          DocumentSnapshot snapshot = await reference.get();
-          return Tag.fromSnapshot(snapshot);
-        }));
-      } else {
-        _tags = null;
+              DocumentSnapshot snapshot = await reference.get();
+              return Tag.fromSnapshot(snapshot);
+            })).then((List<Tag> tags) {
+          if (mounted) {
+            setState(() {
+              _publisher = null;
+              _lastModifiedUser = null;
+              _tags = tags;
+
+              widget.tale = updatedTale;
+            });
+          }
+        });
       }
-
-      setState(() {
-        _publisher = null;
-        _lastModifiedUser = null;
-
-        widget.tale = updatedTale;
-      });
     });
 
     //Init models
@@ -85,6 +91,8 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   @override
   void dispose() {
     _newChipAnimation?.removeStatusListener(_newChipAnimationListener);
+    _taleSnapshotSubscription?.cancel();
+
     super.dispose();
   }
 

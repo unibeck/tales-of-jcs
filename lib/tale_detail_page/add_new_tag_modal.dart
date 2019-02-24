@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:tales_of_jcs/models/tale/tag.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
 import 'package:tales_of_jcs/services/tag/tag_service.dart';
@@ -8,10 +10,11 @@ import 'package:tales_of_jcs/services/tale/tale_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
 
 class AddNewTagModal extends StatefulWidget {
+  static const String routeName = "/AddNewTagModal";
+
   AddNewTagModal({Key key, @required this.tale}) : super(key: key);
 
-  final Tale tale;
-  static const String routeName = "/AddNewTagModal";
+  Tale tale;
 
   @override
   _AddNewTagModalState createState() => _AddNewTagModalState();
@@ -19,6 +22,9 @@ class AddNewTagModal extends StatefulWidget {
 
 class _AddNewTagModalState extends State<AddNewTagModal> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  List<String> _tagTitles;
+  StreamSubscription<DocumentSnapshot> _taleSnapshotSubscription;
 
   bool _showUpdatingProgressIndicator = false;
   bool _errorSavingTag = false;
@@ -34,11 +40,36 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
   @override
   void initState() {
     super.initState();
+
+    _taleSnapshotSubscription = widget.tale.reference
+        .snapshots()
+        .listen((DocumentSnapshot snapshot) {
+      Tale updatedTale = Tale.fromSnapshot(snapshot);
+
+      if (updatedTale.tags != null) {
+        Future.wait(
+            updatedTale.tags.map((DocumentReference reference) async {
+          DocumentSnapshot snapshot = await reference.get();
+          return Tag.fromSnapshot(snapshot);
+        })).then((List<Tag> tags) {
+          if (mounted) {
+            setState(() {
+              if (tags != null) {
+                _tagTitles = tags.map((Tag tag) => tag.title).toList();
+              }
+              widget.tale = updatedTale;
+            });
+          }
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _showErrorSavingTagTimer?.cancel();
+    _taleSnapshotSubscription?.cancel();
+
     super.dispose();
   }
 
@@ -112,7 +143,7 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
                 return "Tags can only be one word";
               }
 
-              if (widget.tale.tags.contains(value)) {
+              if (_tagTitles != null && _tagTitles.contains(value)) {
                 setState(() {
                   _hasValidationError = true;
                 });
@@ -149,21 +180,20 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
       _formKey.currentState.save();
 
       Future<void> updateTaleFuture =
-          _tagService.addNewTagToTale(widget.tale, _newTagStr);
+          _tagService.addTagToTaleTX(widget.tale.reference, _newTagStr);
       setState(() {
         _showUpdatingProgressIndicator = true;
       });
 
       updateTaleFuture.then((_) {
         Navigator.of(context).pop();
-      }).catchError((error) {
-        FirebaseAnalyticsService.analytics.logEvent(
-            name: "failed_to_add_tag_to_existing_tale",
-            parameters: {
-              "taleReference": widget.tale.reference,
-              "tagAttemptingToAdd": _newTagStr,
-//              "userReference": _userService.getCurrentUser().reference
-            });
+      }).catchError((Error error) {
+        FirebaseAnalyticsService.analytics
+            .logEvent(name: "failed_to_add_tag_to_existing_tale", parameters: {
+          "taleReference": widget.tale.reference.toString(),
+          "tagAttemptingToAdd": _newTagStr,
+          "error": error.toString()
+        });
         print("Error: $error");
 
         setState(() {

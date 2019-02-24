@@ -3,13 +3,16 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tales_of_jcs/models/tale/tag.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
+import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
 import 'package:tales_of_jcs/services/auth/auth_service.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 
 class TagService {
   //Singleton
   TagService._internal();
+
   static final TagService _instance = TagService._internal();
+
   static TagService get instance {
     return _instance;
   }
@@ -19,6 +22,7 @@ class TagService {
   static final TaleService _taleService = TaleService.instance;
 
   static String _tagsCollection = "tags-test";
+
   static String get tagsCollection => _tagsCollection;
 
   Future<DocumentReference> createNewTag(Tag tag) async {
@@ -40,29 +44,79 @@ class TagService {
     Tag newTag = Tag(tagStr, [await _authService.getCurrentUserDocRef()]);
     DocumentReference newTagRef = await createNewTag(newTag);
 
-    List<DocumentReference> newTagList = List.from(tale.tags)..add(newTagRef);
+    List<DocumentReference> newTagList;
+    if (tale.tags != null) {
+      newTagList = List.from(tale.tags)..add(newTagRef);
+    } else {
+      newTagList = [newTagRef];
+    }
+
     return tale.reference.updateData(<String, dynamic>{"tags": newTagList});
   }
 
-  //Transaction version of adding a tag to a tale. Though this is currently
-  // broken in the cloud_firestore library
-  Future<bool> addTagToTaleTX(Tale tale, String tag) async {
-    List<String> newTagList = List.from(tale.tags)..add(tag);
+  Future<void> addTagToTaleTX(
+      DocumentReference taleRef, String newTagStr) async {
+    //First create the new Tag
+    DocumentReference currentUserDocRef =
+        await _authService.getCurrentUserDocRef();
+    DocumentReference newTagRef =
+        await createNewTag(Tag(newTagStr, [currentUserDocRef]));
 
-    return Firestore.instance.runTransaction((Transaction tx) async {
-      //Make sure the tale still exists before we update it
-      DocumentSnapshot taleSnapshot = await tx.get(tale.reference);
+    _firestore.runTransaction((Transaction tx) async {
+      //Get latest record of the tale
+      DocumentSnapshot taleSnapshot = await tx.get(taleRef);
+
       if (taleSnapshot.exists) {
-        await tx.update(tale.reference, <String, dynamic>{"tags": newTagList});
-        return {"updated": true};
-      }
+        Tale tale = Tale.fromSnapshot(taleSnapshot);
 
-      return {"updated": false};
-    })
-        .then((result) => result["updated"])
-        .catchError((error) {
-      print("Error: $error");
-      return false;
+        List<DocumentReference> newTagRefList;
+        if (tale.tags != null) {
+          List<Tag> tags = await Future.wait(
+              tale.tags.map((DocumentReference reference) async {
+            DocumentSnapshot snapshot = await reference.get();
+            return Tag.fromSnapshot(snapshot);
+          }));
+
+          //Check if any duplicates were made between UI validation and the
+          // transaction starting
+          for (Tag tag in tags) {
+            //If a duplicate is found then simply add the user to the
+            // likedByUser field of the tag since they were trying to add it
+            // anyways. Then safely return out as we don't want to do anymore
+            // processing
+            if (tag.title == (newTagStr)) {
+
+              //Only add the user if he isn't already part of the list
+              if (tag.likedByUsers == null ||
+                  tag.likedByUsers.contains(currentUserDocRef)) {
+                List<DocumentReference> likedByUsers =
+                    List.from(tag.likedByUsers ?? [])..add(currentUserDocRef);
+
+                await tx.update(tag.reference,
+                    <String, dynamic>{"likedByUsers": likedByUsers});
+              }
+
+              return;
+            }
+          }
+
+          //If we got here then it is still safe to add the new tag
+          newTagRefList = List.from(tale.tags)..add(newTagRef);
+        } else {
+          newTagRefList = [newTagRef];
+        }
+
+        await tx
+            .update(tale.reference, <String, dynamic>{"tags": newTagRefList});
+      } else {
+        throw StateError(
+            "The taleRef provide [${taleRef?.toString()}] does not exist in the database.");
+      }
+    }).catchError((Error error) async {
+      //Delete the new tag ref we created before the transaction if anything
+      // fails
+      await currentUserDocRef.delete();
+      throw error;
     });
   }
 }
