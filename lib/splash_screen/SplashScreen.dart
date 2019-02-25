@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:tales_of_jcs/home_page/home_page.dart';
+import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
 import 'package:tales_of_jcs/services/auth/auth_service.dart';
 import 'package:tales_of_jcs/utils/primary_app_theme.dart';
 
@@ -25,6 +26,7 @@ class _SplashScreenState extends State<SplashScreen>
   Timer _splashScreenTimer;
 
   bool _showLoginButton = false;
+  bool _isLoggingIn = false;
 
   //Services
   final AuthService _authService = AuthService.instance;
@@ -46,9 +48,9 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _jcsMovementAnimation = Tween<double>(begin: 1.0, end: 0.0)
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut))
-          ..addListener(() {
-            setState(() {});
-          });
+      ..addListener(() {
+        setState(() {});
+      });
     _controller.forward();
 
     _authService.getCurrentUser().then((FirebaseUser user) {
@@ -90,13 +92,23 @@ class _SplashScreenState extends State<SplashScreen>
                     children: List.unmodifiable(() sync* {
                       yield Text(
                         "Tales of JCS",
-                        style: Theme.of(context).textTheme.headline.copyWith(
+                        style: Theme
+                            .of(context)
+                            .textTheme
+                            .headline
+                            .copyWith(
                             color: Colors.white,
                             fontSize: 48,
                             fontFamily: "Roboto"),
                       );
                       if (_showLoginButton) {
                         yield _loginButton();
+                      }
+                      if (_isLoggingIn) {
+                        yield Padding(
+                          padding: EdgeInsets.only(top: 64),
+                          child: CircularProgressIndicator(),
+                        );
                       }
                     }()),
                   ),
@@ -118,7 +130,7 @@ class _SplashScreenState extends State<SplashScreen>
                         decoration: BoxDecoration(
                           image: DecorationImage(
                               image:
-                                  AssetImage("assets/images/unicorn_jcs.png"),
+                              AssetImage("assets/images/unicorn_jcs.png"),
                               fit: BoxFit.fill),
                         ),
                       ),
@@ -152,8 +164,7 @@ class _SplashScreenState extends State<SplashScreen>
           borderRadius: BorderRadius.circular(8),
           boxShadow: <BoxShadow>[
             BoxShadow(
-                color: PrimaryAppTheme
-                    .accentYaleColorSwatch.shade300,
+                color: PrimaryAppTheme.accentYaleColorSwatch.shade300,
                 offset: Offset(0, 8),
                 blurRadius: 16,
                 spreadRadius: -2),
@@ -167,30 +178,41 @@ class _SplashScreenState extends State<SplashScreen>
             end: Alignment.bottomRight,
           )),
       child: RawMaterialButton(
-        highlightColor:
-        PrimaryAppTheme.accentYaleColorSwatch.shade500,
+        highlightColor: PrimaryAppTheme.accentYaleColorSwatch.shade500,
         padding: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8)),
-        onPressed: () {
-          _authService.signIn().then((FirebaseUser user) {
-            Navigator.pushReplacementNamed(
-                context, HomePage.routeName);
-          }).catchError((e) => print(e));
-        },
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        onPressed: _isLoggingIn ? null : _loginAction,
         child: Padding(
-          padding: EdgeInsets.symmetric(
-              vertical: 8, horizontal: 36),
+          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 36),
           child: Text(
             "LOGIN",
             style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontFamily: "Roboto"),
+                color: Colors.white, fontSize: 24, fontFamily: "Roboto"),
           ),
         ),
       ),
     );
+  }
+
+  void _loginAction() {
+    setState(() {
+      _isLoggingIn = true;
+      _showLoginButton = false;
+    });
+
+    _authService.signIn().then((FirebaseUser user) {
+      Navigator.pushReplacementNamed(context, HomePage.routeName);
+    }).catchError((Error error) {
+      setState(() {
+        _isLoggingIn = false;
+        _showLoginButton = true;
+      });
+
+      FirebaseAnalyticsService.analytics.logEvent(
+          name: "failed_to_login",
+          parameters: {"error": error.toString()});
+      print("Error: $error");
+    });
   }
 }
 

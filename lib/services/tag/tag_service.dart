@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tales_of_jcs/models/tale/tag.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
-import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
 import 'package:tales_of_jcs/services/auth/auth_service.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 
@@ -110,12 +109,12 @@ class TagService {
             .update(tale.reference, <String, dynamic>{"tags": newTagRefList});
       } else {
         throw StateError(
-            "The taleRef provide [${taleRef?.toString()}] does not exist in the database.");
+            "The taleRef provided [${taleRef?.toString()}] does not exist in the database.");
       }
     }).catchError((Error error) async {
       //Delete the new tag ref we created before the transaction if anything
       // fails
-      await currentUserDocRef.delete();
+      await newTagRef.delete();
       throw error;
     });
   }

@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:smooth_star_rating/smooth_star_rating.dart';
 import 'package:tales_of_jcs/models/tale/tag.dart';
-
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/user/user.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/add_new_tag_modal.dart';
 import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
+import 'package:tales_of_jcs/tale_detail_page/tale_rating_dialog.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/custom_expansion_tile.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/doppelganger_avatar.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hero_modal_route.dart';
@@ -33,6 +34,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
 
   double _averageRating;
   int _ratingCount;
+  int _userSelectedRating;
 
   User _publisher;
   bool _loadingPublisher = false;
@@ -49,17 +51,15 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   void initState() {
     super.initState();
 
-    _taleSnapshotSubscription = widget.tale.reference
-        .snapshots()
-        .listen((DocumentSnapshot snapshot) {
+    _taleSnapshotSubscription =
+        widget.tale.reference.snapshots().listen((DocumentSnapshot snapshot) {
       Tale updatedTale = Tale.fromSnapshot(snapshot);
 
       if (updatedTale.tags != null) {
-        Future.wait(
-            updatedTale.tags.map((DocumentReference reference) async {
-              DocumentSnapshot snapshot = await reference.get();
-              return Tag.fromSnapshot(snapshot);
-            })).then((List<Tag> tags) {
+        Future.wait(updatedTale.tags.map((DocumentReference reference) async {
+          DocumentSnapshot snapshot = await reference.get();
+          return Tag.fromSnapshot(snapshot);
+        })).then((List<Tag> tags) {
           if (mounted) {
             setState(() {
               _publisher = null;
@@ -206,7 +206,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                   children: <Widget>[
                     RaisedButton(
                       onPressed: () {
-                        _taleService.updateAllTales();
+                        _showRatingDialog();
                       },
                       child: Text("Rate"),
                     ),
@@ -486,6 +486,85 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
               return AddNewTagModal(tale: widget.tale);
             }));
   }
+
+  void _showRatingDialog() {
+    showDialog(
+      barrierDismissible: true,
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          titlePadding: EdgeInsets.all(0),
+          contentPadding: EdgeInsets.all(0),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: TaleRatingDialogContent(
+            onRatingChange: (double v) {
+              //toInt simply truncates the decimal value
+              setState(() {
+                _userSelectedRating = v.toInt();
+              });
+            },
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+                return;
+              },
+            ),
+            FlatButton(
+              child: Text("Save"),
+              onPressed: () {
+                print(
+                    "The value of _userSelectedRating is [$_userSelectedRating]");
+                Navigator.of(context).pop();
+                return;
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+//  List<Widget> _buildRatingStarButtons() {
+//    int starsRemaining = _maxStarRating - _userSelectedRating;
+//    List<Widget> ratingStarButtons = [];
+//
+//    for (int i = 1; i < _userSelectedRating; i++) {
+//      ratingStarButtons.add(IconButton(
+//        iconSize: 32,
+//        onPressed: () {
+//          setState(() {
+//            _userSelectedRating = i;
+//          });
+//        },
+//        icon: Icon(
+//          Icons.star,
+//          color: Colors.amber,
+//        ),
+//      ));
+//    }
+//
+//    for (int i = 0; i <= starsRemaining; i++) {
+//      ratingStarButtons.add(IconButton(
+//        iconSize: 32,
+//        onPressed: () {
+//          setState(() {
+//            _userSelectedRating = i + _userSelectedRating;
+//          });
+//        },
+//        icon: Icon(
+//          Icons.star_border,
+//          color: Colors.amber,
+//        ),
+//      ));
+//    }
+//
+//    return ratingStarButtons;
+//  }
+
 }
 
 class TaleDetailPageRoute<T> extends PageRouteBuilder<T> {

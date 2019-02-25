@@ -7,10 +7,11 @@ class Tale {
   DocumentReference publisher;
   DocumentReference lastModifiedUser;
   List<DocumentReference> tags = [];
+  List<DocumentReference> ratings = [];
 
-  List<DocumentReference> ratings;
-  double averageRating;
+  //TODO: This should be on the user record, but vice-versa.
   List<DocumentReference> readBy = [];
+
   String jcsVerified;
 
   DateTime dateCreated;
@@ -24,7 +25,7 @@ class Tale {
         publisher = map["publisher"],
         lastModifiedUser = map["lastModifiedUser"],
         tags = map["tags"]?.cast<DocumentReference>(),
-        ratings = map["rating"],
+        ratings = map["ratings"]?.cast<DocumentReference>(),
         readBy = map["readBy"]?.cast<DocumentReference>(),
         jcsVerified = map["jcsVerified"],
         dateCreated = map["dateCreated"],
