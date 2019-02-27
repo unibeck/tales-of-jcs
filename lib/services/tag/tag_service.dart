@@ -53,7 +53,7 @@ class TagService {
     return tale.reference.updateData(<String, dynamic>{"tags": newTagList});
   }
 
-  Future<void> addTagToTaleTX(
+  Future<Map<String, dynamic>> addTagToTaleTX(
       DocumentReference taleRef, String newTagStr) async {
     //First create the new Tag
     DocumentReference currentUserDocRef =
@@ -61,7 +61,7 @@ class TagService {
     DocumentReference newTagRef =
         await createNewTag(Tag(newTagStr, [currentUserDocRef]));
 
-    _firestore.runTransaction((Transaction tx) async {
+    return _firestore.runTransaction((Transaction tx) async {
       //Get latest record of the tale
       DocumentSnapshot taleSnapshot = await tx.get(taleRef);
 
@@ -95,7 +95,7 @@ class TagService {
                     <String, dynamic>{"likedByUsers": likedByUsers});
               }
 
-              return;
+              return {"message": "Tag updated"};
             }
           }
 
@@ -107,6 +107,7 @@ class TagService {
 
         await tx
             .update(tale.reference, <String, dynamic>{"tags": newTagRefList});
+        return {"message": "Tag submited!"};
       } else {
         throw StateError(
             "The taleRef provided [${taleRef?.toString()}] does not exist in the database.");

@@ -110,7 +110,7 @@ class _TaleRatingDialogContentState extends State<TaleRatingDialogContent> {
         child: Column(
           children: <Widget>[
             Icon(Icons.error, color: Colors.red, size: 48),
-            Text("Error, please try again soon")
+            Text("Error, please try again later")
           ],
         ),
       );
