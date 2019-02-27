@@ -30,59 +30,51 @@ class RatingService {
     return _firestore.collection(ratingsCollection).add(tagMap);
   }
 
-  Future<void> addRatingToTaleTX(
-      DocumentReference taleRef, int newRatingValue) async {
-    //First create the new Tag
+  Future<Map<String, dynamic>> addRatingToTaleTX(Tale tale, int newRatingValue) async {
+    //First create the new Rating
     DocumentReference currentUserDocRef =
         await _authService.getCurrentUserDocRef();
     DocumentReference newRatingRef =
         await createNewRating(TaleRating(newRatingValue, currentUserDocRef));
 
-    Future<Map<String, dynamic>> test = _firestore.runTransaction((Transaction tx) async {
+    return _firestore.runTransaction((Transaction tx) async {
       //Get latest record of the tale
-      DocumentSnapshot taleSnapshot = await tx.get(taleRef);
+      //TODO: This doesn't work as a transaction
+      //DocumentSnapshot taleSnapshot = await tx.get(tale.reference);
 
-      if (taleSnapshot.exists) {
-        Tale tale = Tale.fromSnapshot(taleSnapshot);
+      List<DocumentReference> newRatingRefList;
+      if (tale.ratings != null) {
+        List<TaleRating> ratings = await Future.wait(
+            tale.ratings.map((DocumentReference reference) async {
+          DocumentSnapshot snapshot = await tx.get(reference);
+          return TaleRating.fromSnapshot(snapshot);
+        }));
 
-        List<DocumentReference> newRatingRefList;
-        if (tale.ratings != null) {
-          List<TaleRating> ratings = await Future.wait(
-              tale.ratings.map((DocumentReference reference) async {
-            DocumentSnapshot snapshot = await reference.get();
-            return TaleRating.fromSnapshot(snapshot);
-          }));
+        for (TaleRating rating in ratings) {
+          //Let's prevent duplicate ratings
+          if (rating.reviewer == currentUserDocRef) {
+            await tx.update(
+                rating.reference, <String, dynamic>{"rating": newRatingValue});
 
-          for (TaleRating rating in ratings) {
-            //Let's prevent duplicate ratings
-            if (rating.reviewer == currentUserDocRef) {
-              await tx.update(rating.reference,
-                  <String, dynamic>{"rating": newRatingValue});
-
-              return "Updated your rating";
-            }
+            await tx.delete(newRatingRef);
+            return {"message": "Your rating has been updated!"};
           }
-
-          //If we got here then it is safe to add the new rating
-          newRatingRefList = List.from(tale.ratings)..add(newRatingRef);
-        } else {
-          newRatingRefList = [newRatingRef];
         }
 
-        await tx.update(
-            tale.reference, <String, dynamic>{"ratings": newRatingRefList});
-        return "Rating submitted!";
+        //If we got here then it is safe to add the new rating
+        newRatingRefList = List.from(tale.ratings)..add(newRatingRef);
       } else {
-        throw StateError(
-            "The taleRef provided [${taleRef?.toString()}] does not exist in the database.");
+        newRatingRefList = [newRatingRef];
       }
+
+      await tx.update(
+          tale.reference, <String, dynamic>{"ratings": newRatingRefList});
+      return {"message": "Rating submited!"};
     }).catchError((Error error) async {
       //Delete the new rating ref we created before the transaction if anything
       // fails
       await newRatingRef.delete();
       throw error;
     });
-
-    print(test);
   }
 }

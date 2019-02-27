@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:smooth_star_rating/smooth_star_rating.dart';
 import 'package:tales_of_jcs/models/tale/tag.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/user/user.dart';
@@ -34,7 +33,6 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
 
   double _averageRating;
   int _ratingCount;
-  int _userSelectedRating;
 
   User _publisher;
   bool _loadingPublisher = false;
@@ -205,9 +203,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
                     RaisedButton(
-                      onPressed: () {
-                        _showRatingDialog();
-                      },
+                      onPressed: _showRatingDialog,
                       child: Text("Rate"),
                     ),
                   ],
@@ -489,82 +485,12 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
 
   void _showRatingDialog() {
     showDialog(
-      barrierDismissible: true,
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          titlePadding: EdgeInsets.all(0),
-          contentPadding: EdgeInsets.all(0),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          content: TaleRatingDialogContent(
-            onRatingChange: (double v) {
-              //toInt simply truncates the decimal value
-              setState(() {
-                _userSelectedRating = v.toInt();
-              });
-            },
-          ),
-          actions: <Widget>[
-            FlatButton(
-              child: Text("Close"),
-              onPressed: () {
-                Navigator.of(context).pop();
-                return;
-              },
-            ),
-            FlatButton(
-              child: Text("Save"),
-              onPressed: () {
-                print(
-                    "The value of _userSelectedRating is [$_userSelectedRating]");
-                Navigator.of(context).pop();
-                return;
-              },
-            ),
-          ],
-        );
-      },
-    );
+        barrierDismissible: true,
+        context: context,
+        builder: (BuildContext context) {
+          return TaleRatingDialogContent(tale: widget.tale);
+        });
   }
-
-//  List<Widget> _buildRatingStarButtons() {
-//    int starsRemaining = _maxStarRating - _userSelectedRating;
-//    List<Widget> ratingStarButtons = [];
-//
-//    for (int i = 1; i < _userSelectedRating; i++) {
-//      ratingStarButtons.add(IconButton(
-//        iconSize: 32,
-//        onPressed: () {
-//          setState(() {
-//            _userSelectedRating = i;
-//          });
-//        },
-//        icon: Icon(
-//          Icons.star,
-//          color: Colors.amber,
-//        ),
-//      ));
-//    }
-//
-//    for (int i = 0; i <= starsRemaining; i++) {
-//      ratingStarButtons.add(IconButton(
-//        iconSize: 32,
-//        onPressed: () {
-//          setState(() {
-//            _userSelectedRating = i + _userSelectedRating;
-//          });
-//        },
-//        icon: Icon(
-//          Icons.star_border,
-//          color: Colors.amber,
-//        ),
-//      ));
-//    }
-//
-//    return ratingStarButtons;
-//  }
-
 }
 
 class TaleDetailPageRoute<T> extends PageRouteBuilder<T> {
