@@ -202,7 +202,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _authService.signIn().then((FirebaseUser user) {
       Navigator.pushReplacementNamed(context, HomePage.routeName);
-    }).catchError((Error error) {
+    }).catchError((error) {
       setState(() {
         _isLoggingIn = false;
         _showLoginButton = true;

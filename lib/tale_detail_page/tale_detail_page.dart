@@ -3,16 +3,13 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:tales_of_jcs/models/tale/tag.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/user/user.dart';
-import 'package:tales_of_jcs/services/tale/tale_service.dart';
-import 'package:tales_of_jcs/tale_detail_page/add_new_tag_modal.dart';
-import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
+import 'package:tales_of_jcs/tale_detail_page/rating_details.dart';
+import 'package:tales_of_jcs/tale_detail_page/tag_details.dart';
 import 'package:tales_of_jcs/tale_detail_page/tale_rating_dialog.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/custom_expansion_tile.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/doppelganger_avatar.dart';
-import 'package:tales_of_jcs/utils/custom_widgets/hero_modal_route.dart';
 import 'package:tales_of_jcs/utils/primary_app_theme.dart';
 
 class TaleDetailPage extends StatefulWidget {
@@ -26,69 +23,24 @@ class TaleDetailPage extends StatefulWidget {
   _TaleDetailPageState createState() => _TaleDetailPageState();
 }
 
+///Purposely leave the tale title and tale story static and not live as that
+/// would be jarring as a user to be reading and having text change on you
 class _TaleDetailPageState extends State<TaleDetailPage> {
   //View related
   StreamSubscription<DocumentSnapshot> _taleSnapshotSubscription;
-  List<Tag> _tags;
-
-  double _averageRating;
-  int _ratingCount;
 
   User _publisher;
   bool _loadingPublisher = false;
   User _lastModifiedUser;
   bool _loadingLastModifiedUser = false;
 
-  bool _showAddNewTagWidget = true;
-  Animation<double> _newChipAnimation;
-
-  //Services
-  final TaleService _taleService = TaleService.instance;
-
   @override
   void initState() {
     super.initState();
-
-    _taleSnapshotSubscription =
-        widget.tale.reference.snapshots().listen((DocumentSnapshot snapshot) {
-      Tale updatedTale = Tale.fromSnapshot(snapshot);
-
-      if (updatedTale.tags != null) {
-        Future.wait(updatedTale.tags.map((DocumentReference reference) async {
-          DocumentSnapshot snapshot = await reference.get();
-          return Tag.fromSnapshot(snapshot);
-        })).then((List<Tag> tags) {
-          if (mounted) {
-            setState(() {
-              _publisher = null;
-              _lastModifiedUser = null;
-              _tags = tags;
-
-              widget.tale = updatedTale;
-            });
-          }
-        });
-      }
-    });
-
-    //Init models
-    _setRatingAverageAndCount();
-
-    if (widget.tale.tags != null) {
-      Future.wait(widget.tale.tags.map((DocumentReference reference) async {
-        DocumentSnapshot snapshot = await reference.get();
-        return Tag.fromSnapshot(snapshot);
-      })).then((List<Tag> tags) {
-        setState(() {
-          _tags = tags;
-        });
-      });
-    }
   }
 
   @override
   void dispose() {
-    _newChipAnimation?.removeStatusListener(_newChipAnimationListener);
     _taleSnapshotSubscription?.cancel();
 
     super.dispose();
@@ -117,42 +69,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                             .copyWith(color: Colors.white)),
                     tag: "${widget.tale.reference.documentID}_title"),
               ),
-              ListTile(
-                //TODO: this causes a small overflow during animating into this
-                // widget. "A RenderFlex overflowed by 0.787 pixels on the right"
-                // This should be fine as it's not noticeable so early into the
-                // animation and is small
-                title: Row(
-                  children: <Widget>[
-                    Icon(
-                      Icons.star,
-                      color: Colors.white,
-                    ),
-                    Icon(
-                      Icons.star,
-                      color: Colors.white,
-                    ),
-                    Icon(
-                      Icons.star,
-                      color: Colors.white,
-                    ),
-                    Icon(
-                      Icons.star_half,
-                      color: Colors.white,
-                    ),
-                    Icon(
-                      Icons.star_border,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
-                subtitle: Text(
-                    "($_averageRating Stars out of $_ratingCount ratings)",
-                    style: Theme.of(context)
-                        .textTheme
-                        .subtitle
-                        .copyWith(color: Colors.white)),
-              ),
+              RatingDetails(tale: widget.tale),
               ListTile(
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 16, horizontal: 16),
@@ -185,15 +102,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                   ),
                 ),
               ),
-              ListTile(
-                contentPadding:
-                    EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                title: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  children: _buildTagChips(context),
-                ),
-              ),
+              TagDetails(tale: widget.tale),
             ]),
             Align(
               alignment: Alignment.bottomCenter,
@@ -283,19 +192,6 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     return storyCardContent;
   }
 
-  void _setRatingAverageAndCount() async {
-    if (widget.tale.ratings == null || widget.tale.ratings.isEmpty) {
-      //TODO: Actually implement
-//      return;
-    }
-
-    setState(() {
-      _averageRating = 3.5;
-      _ratingCount = 2;
-//      _ratingCount = widget.tale.ratings.length;
-    });
-  }
-
   void _setPublisher() {
     if (_publisher != null) {
       return;
@@ -352,135 +248,6 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
         _loadingLastModifiedUser = false;
       });
     });
-  }
-
-  List<Widget> _buildTagChips(BuildContext context) {
-    List<Widget> tagChips = List<Widget>();
-
-    //Add all tags associated with the Tale
-    if (_tags != null) {
-      tagChips = _tags.map((Tag tag) {
-        return Hero(
-          tag: TagModalManifest.getChipHeroTagFromTaleTag(tag.title),
-          child: Chip(
-            backgroundColor: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
-//            avatar: CircleAvatar(child: Text("${tag.likedByUsers.length}00")),
-            avatar: Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColorDark,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(2),
-                  child: Text("${tag.likedByUsers.length}00"),
-                )),
-            label: Text(tag.title,
-                style: Theme.of(context)
-                    .textTheme
-                    .body1
-                    .copyWith(color: Colors.white)),
-          ),
-        );
-      }).toList();
-    }
-
-    //Add a chip for a user to add additional tags
-    tagChips.add(Hero(
-        flightShuttleBuilder: (
-          BuildContext flightContext,
-          Animation<double> animation,
-          HeroFlightDirection flightDirection,
-          BuildContext fromHeroContext,
-          BuildContext toHeroContext,
-        ) {
-          _newChipAnimation?.removeStatusListener(_newChipAnimationListener);
-          _newChipAnimation = animation;
-
-          //Manage the visibility of the add tag widget to keep the widget
-          // hidden when we're animating and using the add tag modal
-          _newChipAnimation.addStatusListener(_newChipAnimationListener);
-
-          if (flightDirection == HeroFlightDirection.push) {
-            final Hero toHero = toHeroContext.widget;
-            return toHero.child;
-          } else {
-            //Since the toHero.child is hidden we can't use it to animate as we
-            // do in the HeroFlightDirection.push block. Instead we reproduce
-            // the widget to display a visible version
-            return _addNewTagWidget(toHeroContext, false, false);
-          }
-        },
-        tag: TagModalManifest.getNewChipHeroTag,
-        //We use a visibility widget so we can hide the add tag widget on the
-        // detail page when the add tag modal is open
-        child: Visibility(
-            //We use an invisible widget so the Hero can still correctly animate
-            // to the widget's position
-            replacement: Opacity(
-              opacity: 0,
-              child: _addNewTagWidget(context, true, false),
-            ),
-            visible: _showAddNewTagWidget,
-            child: _addNewTagWidget(context, true, false))));
-
-    return tagChips;
-  }
-
-  void _newChipAnimationListener(AnimationStatus status) {
-    if (AnimationStatus.dismissed == status) {
-      setState(() {
-        _showAddNewTagWidget = true;
-      });
-    } else if (AnimationStatus.completed == status) {
-      setState(() {
-        _showAddNewTagWidget = false;
-      });
-    }
-  }
-
-  Widget _addNewTagWidget(
-      BuildContext context, bool withAddTag, bool withAddTagAsHero) {
-    return Card(
-      color: Theme.of(context).primaryColorLight,
-      margin: EdgeInsets.all(0),
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(32))),
-      child: InkWell(
-        onTap: _addNewTag,
-        child: Padding(
-          padding: EdgeInsets.all(2),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.unmodifiable(() sync* {
-              yield Padding(
-                padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                child: Text("ADD NEW TAG"),
-              );
-              if (withAddTag) {
-                if (withAddTagAsHero) {
-                  yield Hero(
-                      tag: TagModalManifest.getNewChipAddIconHeroTag(),
-                      child: Icon(Icons.add_circle_outline));
-                } else {
-                  yield Icon(Icons.add_circle_outline);
-                }
-              }
-            }()),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _addNewTag() {
-    Navigator.push(
-        context,
-        HeroModalRoute(
-            settings: RouteSettings(
-                name: "${TaleDetailPage.routeName}${AddNewTagModal.routeName}"),
-            builder: (BuildContext context) {
-              return AddNewTagModal(tale: widget.tale);
-            }));
   }
 
   void _showRatingDialog() {

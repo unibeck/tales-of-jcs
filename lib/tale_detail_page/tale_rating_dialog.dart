@@ -162,10 +162,10 @@ class _TaleRatingDialogContentState extends State<TaleRatingDialogContent> {
 
       _showSuccessSavingRatingTimer?.cancel();
       _showSuccessSavingRatingTimer =
-          Timer.periodic(Duration(seconds: 3), (Timer timer) async {
+          Timer(Duration(seconds: 3), () async {
         Navigator.of(context).pop();
       });
-    }).catchError((Error error) {
+    }).catchError((error) {
       FirebaseAnalyticsService.analytics
           .logEvent(name: "failed_to_add_rating_to_existing_tale", parameters: {
         "taleReference": widget.tale.reference.toString(),
@@ -180,7 +180,7 @@ class _TaleRatingDialogContentState extends State<TaleRatingDialogContent> {
 
       _showErrorSavingRatingTimer?.cancel();
       _showErrorSavingRatingTimer =
-          Timer.periodic(Duration(seconds: 3), (Timer timer) async {
+          Timer(Duration(seconds: 3), () async {
         setState(() {
           _saveRatingProgressState = ProgressState.IDLE;
         });

@@ -112,7 +112,7 @@ class TagService {
         throw StateError(
             "The taleRef provided [${taleRef?.toString()}] does not exist in the database.");
       }
-    }).catchError((Error error) async {
+    }).catchError((error) async {
       //Delete the new tag ref we created before the transaction if anything
       // fails
       await newTagRef.delete();

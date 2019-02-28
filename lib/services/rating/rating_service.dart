@@ -70,7 +70,7 @@ class RatingService {
       await tx.update(
           tale.reference, <String, dynamic>{"ratings": newRatingRefList});
       return {"message": "Rating submited!"};
-    }).catchError((Error error) async {
+    }).catchError((error) async {
       //Delete the new rating ref we created before the transaction if anything
       // fails
       await newRatingRef.delete();

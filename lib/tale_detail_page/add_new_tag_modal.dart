@@ -198,10 +198,10 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
 
         _showSuccessSavingTagTimer?.cancel();
         _showSuccessSavingTagTimer =
-            Timer.periodic(Duration(seconds: 3), (Timer timer) async {
+            Timer(Duration(seconds: 3), () async {
           Navigator.of(context).pop();
         });
-      }).catchError((Error error) {
+      }).catchError((error) {
         FirebaseAnalyticsService.analytics
             .logEvent(name: "failed_to_add_tag_to_existing_tale", parameters: {
           "taleReference": widget.tale.reference.toString(),
@@ -216,7 +216,7 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
 
         _showErrorSavingTagTimer?.cancel();
         _showErrorSavingTagTimer =
-            Timer.periodic(Duration(seconds: 3), (Timer timer) async {
+            Timer(Duration(seconds: 3), () async {
           setState(() {
             _saveTagProgressState = ProgressState.IDLE;
           });
