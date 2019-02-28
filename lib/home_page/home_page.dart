@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dynamic_theme/dynamic_theme.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +11,7 @@ import 'package:tales_of_jcs/home_page/tale_list_view/tale_list_widget.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
 import 'package:tales_of_jcs/services/auth/auth_service.dart';
+import 'package:tales_of_jcs/services/dev/dev_service.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 import 'package:tales_of_jcs/splash_screen/SplashScreen.dart';
 import 'package:tales_of_jcs/tale_detail_page/tale_detail_page.dart';
@@ -38,6 +41,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
   //Services
   final TaleService _taleService = TaleService.instance;
   final AuthService _authService = AuthService.instance;
+  final DevService _devService = DevService.instance;
 
   @override
   void initState() {
@@ -58,13 +62,48 @@ class _HomePageState extends State<HomePage> with RouteAware {
       ..add(MenuChoice(
           title: "Logout",
           icon: Icons.exit_to_app,
-          //TODO: Make actually logout call
           onSelected: (context) {
             _authService.signOut().then((_) {
               return Navigator.pushReplacementNamed(
                   context, SplashScreen.routeName);
             });
           }));
+
+    //Only runs in debug mode, to help with quicker development
+    assert(() {
+      _menuChildren.add(MenuChoice(
+          title: "Run dev function",
+          icon: Icons.exit_to_app,
+          onSelected: (context) {
+            showDialog(
+              barrierDismissible: false,
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("Are you sure you want to run this dev function"),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  actions: <Widget>[
+                    FlatButton(
+                      child: Text("Close"),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    FlatButton(
+                      child: Text("Yes"),
+                      onPressed: () {
+                        _devService.updateAllUsers();
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          }));
+      return true;
+    }());
   }
 
   @override
@@ -76,6 +115,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
   @override
   void dispose() {
     FirebaseAnalyticsService.observer.unsubscribe(this);
+
     super.dispose();
   }
 

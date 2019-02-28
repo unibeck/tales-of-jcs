@@ -1,10 +1,10 @@
-import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/user/user.dart';
+import 'package:tales_of_jcs/services/auth/auth_service.dart';
+import 'package:tales_of_jcs/services/user/user_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/rating_details.dart';
 import 'package:tales_of_jcs/tale_detail_page/tag_details.dart';
 import 'package:tales_of_jcs/tale_detail_page/tale_rating_dialog.dart';
@@ -27,22 +27,33 @@ class TaleDetailPage extends StatefulWidget {
 /// would be jarring as a user to be reading and having text change on you
 class _TaleDetailPageState extends State<TaleDetailPage> {
   //View related
-  StreamSubscription<DocumentSnapshot> _taleSnapshotSubscription;
-
   User _publisher;
   bool _loadingPublisher = false;
   User _lastModifiedUser;
   bool _loadingLastModifiedUser = false;
 
+  User _currentUser;
+
+  //Services
+  final AuthService _authService = AuthService.instance;
+  final UserService _userService = UserService.instance;
+
   @override
   void initState() {
     super.initState();
+
+    _authService.getCurrentUserDocRef().then((DocumentReference userRef) {
+      userRef.get().then((DocumentSnapshot userSnapshot) {
+        User user = User.fromSnapshot(userSnapshot);
+        setState(() {
+          _currentUser = user;
+        });
+      });
+    });
   }
 
   @override
   void dispose() {
-    _taleSnapshotSubscription?.cancel();
-
     super.dispose();
   }
 
@@ -171,23 +182,33 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
               Theme.of(context).textTheme.body1.copyWith(color: Colors.white)));
     }
 
-    storyCardContent.add(ButtonTheme.bar(
-      // make buttons use the appropriate styles for cards
-      child: ButtonBar(
-        children: <Widget>[
-          //TODO: Only show if currentUser is publisher or admin
-          FlatButton(
-            child: Text("EDIT"),
-            onPressed: () {},
+    if (_currentUser != null) {
+      if (_publisher == _currentUser ||
+          _currentUser.isAdmin ||
+          _userService.isUserJCS(_currentUser)) {
+        storyCardContent.add(ButtonTheme.bar(
+          child: ButtonBar(
+            children: List.unmodifiable(() sync* {
+              if (_publisher == _currentUser ||
+                  _currentUser.isAdmin ||
+                  _userService.isUserJCS(_currentUser)) {
+                yield FlatButton(
+                  child: Text("EDIT"),
+                  onPressed: () {},
+                );
+              }
+              if (_currentUser.isAdmin ||
+                  _userService.isUserJCS(_currentUser)) {
+                yield FlatButton(
+                  child: Text("APPROVE"),
+                  onPressed: () {},
+                );
+              }
+            }()),
           ),
-          //TODO: Only show if currentUser is admin
-          FlatButton(
-            child: Text("APPROVE"),
-            onPressed: () {},
-          ),
-        ],
-      ),
-    ));
+        ));
+      }
+    }
 
     return storyCardContent;
   }

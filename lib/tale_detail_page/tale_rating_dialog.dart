@@ -83,18 +83,20 @@ class _TaleRatingDialogContentState extends State<TaleRatingDialogContent> {
           yield Center(child: _getDialogContent());
         }()),
       ),
-      actions: <Widget>[
-        FlatButton(
+      actions: List.unmodifiable(() sync* {
+        yield FlatButton(
           child: Text("Close"),
           onPressed: () {
             Navigator.of(context).pop();
           },
-        ),
-        FlatButton(
-          child: Text("Rate"),
-          onPressed: _saveRating,
-        ),
-      ],
+        );
+        if (_saveRatingProgressState == ProgressState.IDLE) {
+          yield FlatButton(
+            child: Text("Rate"),
+            onPressed: _saveRating,
+          );
+        }
+      }()),
     );
   }
 

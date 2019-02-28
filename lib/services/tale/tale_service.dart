@@ -28,16 +28,4 @@ class TaleService {
 
     return _firestore.collection(talesCollection).document().setData(taleMap);
   }
-
-  Future<void> updateAllTales() async {
-    _firestore.collection(talesCollection).snapshots().first.then((QuerySnapshot querySnapshot) {
-      querySnapshot.documents.forEach((DocumentSnapshot docSnapshot) async {
-        Tale tale = Tale.fromSnapshot(docSnapshot);
-//        await tale.reference.updateData(<String, dynamic>{"tags": FieldValue.delete()});
-        await tale.reference.updateData(<String, dynamic>{"publisher": _firestore.document("users/QtjwqNcrT9eQBzAFvuZmrEiFLtj2")});
-        print(tale.title);
-      });
-    });
-
-  }
 }

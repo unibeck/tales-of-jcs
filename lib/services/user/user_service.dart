@@ -17,9 +17,14 @@ class UserService {
   static final Firestore _firestore = Firestore.instance;
 
   static String _usersCollection = "users";
+
   static String get usersCollection => _usersCollection;
 
   Future<void> retrieveUser(DocumentReference user) {}
+
+  bool isUserJCS(User user) {
+    return user.email == "jcantor-stone@jahnelgroup.com";
+  }
 
   Future<void> updateUserLatestLogin(FirebaseUser fbUser) async {
     final DocumentReference userRef =
@@ -33,7 +38,9 @@ class UserService {
       } else {
         //If the user doesn't exist, lets add them to the user table
         User newUser = User.fromFirebaseUser(fbUser,
-            latestLogin: DateTime.now(), latestLogout: DateTime.now());
+            latestLogin: DateTime.now(),
+            latestLogout: DateTime.now(),
+            isAdmin: false);
         await tx.set(userRef, newUser.toMap());
       }
     });
@@ -53,7 +60,9 @@ class UserService {
         // in the user table. Though if we do, let's create a user in the user
         // table
         User newUser = User.fromFirebaseUser(fbUser,
-            latestLogin: DateTime.now(), latestLogout: DateTime.now());
+            latestLogin: DateTime.now(),
+            latestLogout: DateTime.now(),
+            isAdmin: false);
         await tx.set(userRef, newUser.toMap());
       }
     });
