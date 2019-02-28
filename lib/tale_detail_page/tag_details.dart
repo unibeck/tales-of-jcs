@@ -140,21 +140,33 @@ class _TagDetailsState extends State<TagDetails> {
       tag: TagModalManifest.getChipHeroTagFromTaleTag(tag.title),
       child: Chip(
         backgroundColor: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
-//            avatar: CircleAvatar(child: Text("${tag.likedByUsers.length}00")),
-        avatar: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColorDark,
-              borderRadius: BorderRadius.circular(8),
+        labelPadding: EdgeInsets.only(left: 2),
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColorDark,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Text("${tag.likedByUsers.length}",
+                      style: Theme.of(context)
+                          .textTheme
+                          .body1
+                          .copyWith(color: Colors.white)),
+                )),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Text(tag.title,
+                  style: Theme.of(context)
+                      .textTheme
+                      .body1
+                      .copyWith(color: Colors.white)),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(2),
-              child: Text("${tag.likedByUsers.length}00"),
-            )),
-        label: Text(tag.title,
-            style: Theme.of(context)
-                .textTheme
-                .body1
-                .copyWith(color: Colors.white)),
+          ],
+        ),
       ),
     );
   }
@@ -214,8 +226,9 @@ class _TagDetailsState extends State<TagDetails> {
   Widget _addNewTagChip(
       BuildContext context, bool withAddTag, bool withAddTagAsHero) {
     return Card(
+      elevation: 0,
       color: Theme.of(context).primaryColor,
-      margin: EdgeInsets.all(0),
+      margin: EdgeInsets.symmetric(vertical: 6),
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(32))),
       child: InkWell(
