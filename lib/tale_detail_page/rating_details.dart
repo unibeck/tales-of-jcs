@@ -76,17 +76,29 @@ class _RatingDetailsState extends State<RatingDetails> {
   }
 
   Widget _getStarChildren() {
+    //If we haven't loaded the rating references yet
     if (_averageRating == null || _ratings == null) {
-      return Shimmer.fromColors(
-          baseColor: Colors.white,
-          highlightColor: Colors.amber,
-          child: Row(children: <Widget>[
-            Icon(Icons.star),
-            Icon(Icons.star),
-            Icon(Icons.star),
-            Icon(Icons.star),
-            Icon(Icons.star),
-          ]));
+      //If we have ratings to show eventually, but we're still loading
+      if (widget.tale.ratings != null && widget.tale.ratings.isNotEmpty) {
+        return Shimmer.fromColors(
+            baseColor: Colors.white,
+            highlightColor: Colors.amber,
+            child: Row(children: <Widget>[
+              Icon(Icons.star),
+              Icon(Icons.star),
+              Icon(Icons.star),
+              Icon(Icons.star),
+              Icon(Icons.star),
+            ]));
+      } else {
+        return Row(children: <Widget>[
+          Icon(Icons.star, color: Colors.white),
+          Icon(Icons.star, color: Colors.white),
+          Icon(Icons.star, color: Colors.white),
+          Icon(Icons.star, color: Colors.white),
+          Icon(Icons.star, color: Colors.white),
+        ]);
+      }
     } else {
       //TODO: this causes a small overflow during animating into this
       // widget. "A RenderFlex overflowed by 0.787 pixels on the right"
@@ -128,12 +140,22 @@ class _RatingDetailsState extends State<RatingDetails> {
   }
 
   Widget _getSubtitleRatingText() {
+    //If we haven't loaded the rating references yet
     if (_averageRating == null || _ratings == null) {
-      return Text("Loading ratings...",
-          style: Theme.of(context)
-              .textTheme
-              .subtitle
-              .copyWith(color: Colors.white));
+      //If we have ratings to show eventually, but we're still loading
+      if (widget.tale.ratings != null && widget.tale.ratings.isNotEmpty) {
+        return Text("Loading ratings...",
+            style: Theme.of(context)
+                .textTheme
+                .subtitle
+                .copyWith(color: Colors.white));
+      } else {
+        return Text("No one has rated this story yet, go be the first!",
+            style: Theme.of(context)
+                .textTheme
+                .subtitle
+                .copyWith(color: Colors.white));
+      }
     } else {
       String pluralizeStr = Intl.plural(_ratings.length,
           zero: "from 0 ratings",
