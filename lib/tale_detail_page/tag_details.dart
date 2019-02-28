@@ -11,6 +11,7 @@ import 'package:tales_of_jcs/tale_detail_page/add_new_tag_modal.dart';
 import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
 import 'package:tales_of_jcs/tale_detail_page/tale_detail_page.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hero_modal_route.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/on_tap_tooltip.dart';
 import 'package:tales_of_jcs/utils/primary_app_theme.dart';
 
 class TagDetails extends StatefulWidget {
@@ -111,7 +112,7 @@ class _TagDetailsState extends State<TagDetails> {
     //Add all tags associated with the Tale
     if (_tags != null) {
       tagChips = _tags.map((Tag tag) {
-        return _tagToHeroChip(tag);
+        return _tagToChip(tag);
       }).toList();
     }
 
@@ -135,9 +136,12 @@ class _TagDetailsState extends State<TagDetails> {
     }());
   }
 
-  Hero _tagToHeroChip(Tag tag) {
-    return Hero(
-      tag: TagModalManifest.getChipHeroTagFromTaleTag(tag.title),
+  Widget _tagToChip(Tag tag) {
+    return OnTapTooltip(
+      message: "Long press to like a tag",
+      onLongPress: () {
+        Scaffold.of(context).showSnackBar(SnackBar(content: Text("asdf")));
+      },
       child: Chip(
         backgroundColor: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
         labelPadding: EdgeInsets.only(left: 2),

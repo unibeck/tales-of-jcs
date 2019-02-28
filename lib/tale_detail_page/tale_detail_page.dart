@@ -183,13 +183,13 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     }
 
     if (_currentUser != null) {
-      if (_publisher == _currentUser ||
+      if (_publisher?.reference == _currentUser.reference ||
           _currentUser.isAdmin ||
           _userService.isUserJCS(_currentUser)) {
         storyCardContent.add(ButtonTheme.bar(
           child: ButtonBar(
             children: List.unmodifiable(() sync* {
-              if (_publisher == _currentUser ||
+              if (_publisher?.reference == _currentUser.reference ||
                   _currentUser.isAdmin ||
                   _userService.isUserJCS(_currentUser)) {
                 yield FlatButton(
