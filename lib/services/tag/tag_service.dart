@@ -84,7 +84,6 @@ class TagService {
             // anyways. Then safely return out as we don't want to do anymore
             // processing
             if (tag.title == (newTagStr)) {
-
               //Only add the user if he isn't already part of the list
               if (tag.likedByUsers == null ||
                   tag.likedByUsers.contains(currentUserDocRef)) {
@@ -117,6 +116,71 @@ class TagService {
       // fails
       await newTagRef.delete();
       throw error;
+    });
+  }
+
+  ///Update the like for the given tag for the current, signed in user. This
+  /// method will simply just negate the current 'likeness' of the tag for the
+  /// current user. That is if the current user liked the tag, this will unlike
+  /// it and if they have yet to like the tag, this will like it
+  Future<Map<String, dynamic>> updateLikeForTag(
+      DocumentReference tagRef) async {
+    DocumentReference currentUserDocRef =
+        await _authService.getCurrentUserDocRef();
+
+    return _firestore.runTransaction((Transaction tx) async {
+      //Get latest record of the tag
+      DocumentSnapshot tagSnapshot = await tx.get(tagRef);
+
+      if (tagSnapshot.exists) {
+        Tag tag = Tag.fromSnapshot(tagSnapshot);
+        bool isLiked = false;
+
+        List<DocumentReference> newLikedByUsers;
+        if (tag.likedByUsers != null && tag.likedByUsers.isNotEmpty) {
+          newLikedByUsers = List.from(tag.likedByUsers);
+
+          //Remove the user if they're present
+          bool wasLiked = newLikedByUsers.remove(currentUserDocRef);
+          if (!wasLiked) {
+            newLikedByUsers.add(currentUserDocRef);
+
+            isLiked = true;
+          }
+        } else {
+          newLikedByUsers = [currentUserDocRef];
+          isLiked = true;
+        }
+
+        if (newLikedByUsers == null || newLikedByUsers.isEmpty) {
+          await tx.delete(tag.reference);
+        } else {
+          await tx.update(tag.reference,
+              <String, dynamic>{"likedByUsers": newLikedByUsers});
+        }
+
+        return {"isLiked": isLiked, "likedByUsers": newLikedByUsers};
+      } else {
+        throw StateError(
+            "The tagRef provided [${tagRef?.toString()}] does not exist in the database.");
+      }
+    });
+  }
+
+  Future<Map<String, dynamic>> getTagTX(DocumentReference tagRef) async {
+    return _firestore.runTransaction((Transaction tx) async {
+      DocumentSnapshot tagSnapshot = await tx.get(tagRef);
+
+      if (tagSnapshot.exists) {
+        Tag tag = Tag.fromSnapshot(tagSnapshot);
+
+        return {"tag": tag};
+      } else {
+        return {
+          "error":
+              "The tagRef provided [${tagRef?.documentID}] does not exist in the database."
+        };
+      }
     });
   }
 }

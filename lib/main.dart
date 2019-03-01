@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dynamic_theme/dynamic_theme.dart';
 import 'package:firebase_analytics/observer.dart';
 import 'package:fluro/fluro.dart';
@@ -11,6 +12,7 @@ void main() {
   //Need to initialize the instance as soon as the app starts
   final FirebaseAnalyticsService _analyticsService =
       FirebaseAnalyticsService.instance;
+  Firestore.instance.settings(timestampsInSnapshotsEnabled: true);
 
   runApp(TalesOfJCSApp());
 }

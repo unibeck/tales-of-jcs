@@ -186,13 +186,20 @@ class _OnTapTooltipState extends State<OnTapTooltip> with SingleTickerProviderSt
       Feedback.forTap(context);
   }
 
+  void _handleOnLongPress() {
+    if (widget.onLongPress != null) {
+      Feedback.forLongPress(context);
+      widget.onLongPress();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     assert(Overlay.of(context, debugRequiredFor: widget) != null);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _handleOnTap,
-      onLongPress: widget.onLongPress,
+      onLongPress: _handleOnLongPress,
       excludeFromSemantics: true,
       child: Semantics(
         label: widget.excludeFromSemantics ? null : widget.message,

@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:tales_of_jcs/models/tale/tag.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
-import 'package:tales_of_jcs/models/tale/tale_rating.dart';
+import 'package:tales_of_jcs/services/tag/tag_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/add_new_tag_modal.dart';
 import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
 import 'package:tales_of_jcs/tale_detail_page/tale_detail_page.dart';
@@ -24,9 +24,9 @@ class TagDetails extends StatefulWidget {
 }
 
 class _TagDetailsState extends State<TagDetails> {
-  final Random random = Random();
-  final int min = 12;
-  final int max = 26;
+  Random random;
+  int min;
+  int max;
 
   //View related
   StreamSubscription<DocumentSnapshot> _taleSnapshotSubscription;
@@ -37,9 +37,18 @@ class _TagDetailsState extends State<TagDetails> {
 
   List<String> _initShimmerChipStrings = [];
 
+  List<String> _tagChipLikeProcessing = [];
+
+  //Services
+  final TagService _tagService = TagService.instance;
+
   @override
   void initState() {
     super.initState();
+
+    random = Random(widget.tale.title.hashCode);
+    min = 12;
+    max = 26;
 
     //Create n Strings of r length,
     // where n = number of tags and r is a random number between min and max
@@ -65,18 +74,22 @@ class _TagDetailsState extends State<TagDetails> {
     });
   }
 
-  Future<List<TaleRating>> updateTags(List<DocumentReference> tagsRef) async {
+  Future<List<Tag>> updateTags(List<DocumentReference> tagsRef) async {
     return Future.wait(tagsRef.map((DocumentReference reference) async {
       DocumentSnapshot snapshot = await reference.get();
-      return Tag.fromSnapshot(snapshot);
+      if (snapshot.exists) {
+        return Tag.fromSnapshot(snapshot);
+      }
     })).then((List<Tag> tags) {
       Timer(Duration(seconds: 1), () async {
         if (mounted) {
           setState(() {
-            _tags = tags;
+            _tags = List.from(tags);
           });
         }
       });
+
+      return tags;
     });
   }
 
@@ -111,7 +124,8 @@ class _TagDetailsState extends State<TagDetails> {
 
     //Add all tags associated with the Tale
     if (_tags != null) {
-      tagChips = _tags.map((Tag tag) {
+      tagChips =
+          _tags.where((Tag tag) => tag?.reference != null).map((Tag tag) {
         return _tagToChip(tag);
       }).toList();
     }
@@ -138,10 +152,12 @@ class _TagDetailsState extends State<TagDetails> {
 
   Widget _tagToChip(Tag tag) {
     return OnTapTooltip(
-      message: "Long press to like a tag",
-      onLongPress: () {
-        Scaffold.of(context).showSnackBar(SnackBar(content: Text("asdf")));
-      },
+      message: _tagChipLikeProcessing.contains(tag.reference.documentID)
+          ? "Updating..."
+          : "Long press to like a tag",
+      onLongPress: _tagChipLikeProcessing.contains(tag.reference.documentID)
+          ? null
+          : () => _updateLikeForTag(tag),
       child: Chip(
         backgroundColor: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
         labelPadding: EdgeInsets.only(left: 2),
@@ -173,6 +189,43 @@ class _TagDetailsState extends State<TagDetails> {
         ),
       ),
     );
+  }
+
+  void _updateLikeForTag(Tag updateTag) async {
+    setState(() {
+      _tagChipLikeProcessing.add(updateTag.reference.documentID);
+    });
+
+    try {
+      print(
+          "The current liked users are: ${updateTag.likedByUsers.map((ref) => ref.documentID).join(", ")}");
+      Map<String, dynamic> result =
+          await _tagService.updateLikeForTag(updateTag.reference);
+      print(result["isLiked"]);
+      print(
+          "The new liked users are: ${result["likedByUsers"].map((ref) => ref.documentID).join(", ")}");
+
+      //Emulate the updateTag method, but without any DB calls since immediate
+      // calls are not consistent with the DB (don't know why).
+      if (_tags != null) {
+        List<DocumentReference> newLikedByUsers =
+            result["likedByUsers"]?.cast<DocumentReference>();
+
+        if (newLikedByUsers == null || newLikedByUsers.isEmpty) {
+          _tags.remove(updateTag);
+        } else {
+          _tags
+              .firstWhere((Tag tag) => tag.reference == updateTag.reference)
+              .likedByUsers = newLikedByUsers;
+        }
+      }
+    } catch (error) {
+      print("Error: $error");
+    } finally {
+      setState(() {
+        _tagChipLikeProcessing.remove(updateTag.reference.documentID);
+      });
+    }
   }
 
   Hero _addNewTagHeroChip() {

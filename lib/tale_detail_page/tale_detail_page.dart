@@ -164,7 +164,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     if (widget.tale.dateLastModified != null && _lastModifiedUser != null) {
       DateFormat formatter = DateFormat.yMMMMd("en_US");
       String formattedLastModifiedDate =
-          formatter.format(widget.tale.dateLastModified);
+          formatter.format(widget.tale.dateLastModified.toDate());
 
       storyCardContent.add(ListTile(
           contentPadding: EdgeInsets.zero,

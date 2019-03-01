@@ -6,8 +6,8 @@ class User {
   final String name;
   final String email;
   final String photoUrl;
-  final DateTime latestLogin;
-  final DateTime latestLogout;
+  final Timestamp latestLogin;
+  final Timestamp latestLogout;
   final bool isAdmin;
 
   User(this.reference, this.name, this.email, this.photoUrl, this.latestLogin,

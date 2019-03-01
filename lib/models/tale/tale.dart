@@ -9,13 +9,13 @@ class Tale {
   List<DocumentReference> tags = [];
   List<DocumentReference> ratings = [];
 
-  //TODO: This should be on the user record, but vice-versa.
+  //TODO: This should be on the user record, but vice-versa (.e. talesRead)
   List<DocumentReference> readBy = [];
 
   String jcsVerified;
 
-  DateTime dateCreated;
-  DateTime dateLastModified;
+  Timestamp dateCreated;
+  Timestamp dateLastModified;
 
   Tale();
 
