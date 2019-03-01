@@ -20,7 +20,7 @@ dependencies:
   after_layout: ^1.0.7
   dynamic_theme: ^1.0.1
   hexagonal_grid_widget: ^1.0.1
-  hexagonal_grid: ^1.0.4
+  hexagonal_grid: ^1.0.5
   cupertino_icons: ^0.1.2
   cloud_firestore: ^0.9.5+1
   firebase_analytics: ^2.0.2+1

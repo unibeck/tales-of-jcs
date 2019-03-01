@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dynamic_theme/dynamic_theme.dart';
 import 'package:flutter/material.dart';
@@ -198,21 +196,38 @@ class _HomePageState extends State<HomePage> with RouteAware {
     return StreamBuilder<QuerySnapshot>(
       stream: _taleService.talesStream,
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
-
-        return HexGridWidget(
-            children: snapshot.data.documents.map((DocumentSnapshot snapshot) {
-              final Tale tale = Tale.fromSnapshot(snapshot);
-              return TaleHexGridChild(
-                  tale: tale,
-                  onTap: () {
-                    //Use unique route to assist in animation
-                    Navigator.push(context, TaleDetailPageRoute(tale: tale));
-                  });
-            }).toList(),
-            hexGridContext: HexGridContext(_minHexWidgetSize, _maxHexWidgetSize,
-                _scaleFactor, _densityFactor, _velocityFactor));
+        } else if (snapshot.data.documents.length == 0) {
+          return Padding(
+            padding: const EdgeInsets.all(48),
+            child: Center(
+              child: Text(
+                "No tales have been added yet, go to the Add Tale tab to create the first!",
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.subhead,
+              ),
+            ),
+          );
+        } else {
+          return HexGridWidget(
+              children:
+                  snapshot.data.documents.map((DocumentSnapshot snapshot) {
+                final Tale tale = Tale.fromSnapshot(snapshot);
+                return TaleHexGridChild(
+                    tale: tale,
+                    onTap: () {
+                      //Use unique route to assist in animation
+                      Navigator.push(context, TaleDetailPageRoute(tale: tale));
+                    });
+              }).toList(),
+              hexGridContext: HexGridContext(
+                  _minHexWidgetSize,
+                  _maxHexWidgetSize,
+                  _scaleFactor,
+                  _densityFactor,
+                  _velocityFactor));
+        }
       },
     );
   }
@@ -221,18 +236,30 @@ class _HomePageState extends State<HomePage> with RouteAware {
     return StreamBuilder<QuerySnapshot>(
       stream: _taleService.talesStream,
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
-
-        return Container(
-            color: Theme.of(context).backgroundColor,
-            child: ListView.builder(
-                itemCount: snapshot.data.documents.length,
-                itemBuilder: (context, index) {
-                  final Tale tale =
-                      Tale.fromSnapshot(snapshot.data.documents[index]);
-                  return TaleListWidget.fromTale(tale);
-                }));
+        } else if (snapshot.data.documents.length == 0) {
+          return Padding(
+            padding: const EdgeInsets.all(48),
+            child: Center(
+              child: Text(
+                "No tales have been added yet, go to the Add Tale tab to create the first!",
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.subhead,
+              ),
+            ),
+          );
+        } else {
+          return Container(
+              color: Theme.of(context).backgroundColor,
+              child: ListView.builder(
+                  itemCount: snapshot.data.documents.length,
+                  itemBuilder: (context, index) {
+                    final Tale tale =
+                        Tale.fromSnapshot(snapshot.data.documents[index]);
+                    return TaleListWidget.fromTale(tale);
+                  }));
+        }
       },
     );
   }

@@ -284,14 +284,14 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
 class TaleDetailPageRoute<T> extends PageRouteBuilder<T> {
   TaleDetailPageRoute({@required Tale tale})
       : super(
-          pageBuilder: (BuildContext context, Animation<double> animation,
-              Animation<double> secondaryAnimation) {
-            return AnimatedBuilder(
-                animation: animation,
-                builder: (BuildContext context, Widget child) {
-                  return TaleDetailPage(tale: tale);
-                });
-          },
-          settings: RouteSettings(name: "${TaleDetailPage.routeName}/bubble"),
-        );
+            pageBuilder: (BuildContext context, Animation<double> animation,
+                Animation<double> secondaryAnimation) {
+              return AnimatedBuilder(
+                  animation: animation,
+                  builder: (BuildContext context, Widget child) {
+                    return TaleDetailPage(tale: tale);
+                  });
+            },
+            settings: RouteSettings(name: "${TaleDetailPage.routeName}/bubble"),
+            maintainState: true);
 }
