@@ -40,7 +40,7 @@ class Tale {
         "publisher": publisher,
         "lastModifiedUser": lastModifiedUser,
         "tags": tags,
-        "rating": ratings,
+        "ratings": ratings,
         "readBy": readBy,
         "jcsVerified": jcsVerified,
         "dateCreated": dateCreated,

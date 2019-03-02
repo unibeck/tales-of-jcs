@@ -29,7 +29,6 @@ dependencies:
   fluro: ^1.4.0
   intl: ^0.15.7
   smooth_star_rating: ^1.0.1
-  shimmer: ^1.0.0
 
 dev_dependencies:
   flutter_test:

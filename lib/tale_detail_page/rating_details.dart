@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/tale/tale_rating.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/custom_shimmer.dart';
 
 class RatingDetails extends StatefulWidget {
   RatingDetails({Key key, @required this.tale}) : super(key: key);

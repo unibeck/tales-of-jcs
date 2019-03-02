@@ -3,13 +3,13 @@ import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:tales_of_jcs/models/tale/tag.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/services/tag/tag_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/add_new_tag_modal.dart';
 import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
 import 'package:tales_of_jcs/tale_detail_page/tale_detail_page.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/custom_shimmer.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/hero_modal_route.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/on_tap_tooltip.dart';
 import 'package:tales_of_jcs/utils/primary_app_theme.dart';
@@ -151,43 +151,67 @@ class _TagDetailsState extends State<TagDetails> {
   }
 
   Widget _tagToChip(Tag tag) {
-    return OnTapTooltip(
-      message: _tagChipLikeProcessing.contains(tag.reference.documentID)
-          ? "Updating..."
-          : "Long press to like a tag",
-      onLongPress: _tagChipLikeProcessing.contains(tag.reference.documentID)
-          ? null
-          : () => _updateLikeForTag(tag),
-      child: Chip(
-        backgroundColor: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
-        labelPadding: EdgeInsets.only(left: 2),
-        label: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColorDark,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: Text("${tag.likedByUsers.length}",
-                      style: Theme.of(context)
-                          .textTheme
-                          .body1
-                          .copyWith(color: Colors.white)),
-                )),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
-              child: Text(tag.title,
+    if (_tagChipLikeProcessing.contains(tag.reference.documentID)) {
+      return OnTapTooltip(
+        message: "Updating...",
+        onLongPress: null,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Shimmer.fromColors(
+            blendMode: BlendMode.dstATop,
+            period: Duration(seconds: 1),
+            baseColor: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
+            highlightColor: PrimaryAppTheme.primaryYaleColorSwatch.shade300,
+            child: Container(
+              margin: EdgeInsets.all(2),
+              padding: EdgeInsets.fromLTRB(4, 2, 2, 2),
+              decoration: BoxDecoration(
+                color: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: _tagChipContent(tag),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return OnTapTooltip(
+        message: "Long press to like a tag",
+        onLongPress: () => _updateLikeForTag(tag),
+        child: Chip(
+            backgroundColor: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
+            labelPadding: EdgeInsets.only(left: 2),
+            label: _tagChipContent(tag)),
+      );
+    }
+  }
+
+  Widget _tagChipContent(Tag tag) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColorDark,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Text("${tag.likedByUsers.length}",
                   style: Theme.of(context)
                       .textTheme
                       .body1
                       .copyWith(color: Colors.white)),
-            ),
-          ],
+            )),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8),
+          child: Text(tag.title,
+              style: Theme.of(context)
+                  .textTheme
+                  .body1
+                  .copyWith(color: Colors.white)),
         ),
-      ),
+      ],
     );
   }
 
@@ -197,14 +221,22 @@ class _TagDetailsState extends State<TagDetails> {
     });
 
     try {
-      Map<String, dynamic> result = await _tagService.updateLikeForTag(
+      Future<Map<String, dynamic>> result = _tagService.updateLikeForTag(
           widget.tale.reference, updateTag.reference);
 
+      //Create a future to allow the UI to at least show its animation
+      Future<Map<String, dynamic>> prettyUIFuture =
+          Future.delayed(Duration(seconds: 2), () => {"": ""});
+      List<Map<String, dynamic>> hinderedFuture =
+          await Future.wait<Map<String, dynamic>>([result, prettyUIFuture]);
+
       //Emulate the updateTag method, but without any DB calls since immediate
-      // calls are not consistent with the DB (don't know why).
+      // calls are not consistent with the DB (don't know why). Don't need a
+      // setState immediately since setState will be called in the finally block
       if (_tags != null) {
+        //Index 0 since result is provide first in Future.wait
         List<DocumentReference> newLikedByUsers =
-            result["likedByUsers"]?.cast<DocumentReference>();
+            hinderedFuture[0]["likedByUsers"]?.cast<DocumentReference>();
 
         if (newLikedByUsers == null || newLikedByUsers.isEmpty) {
           _tags.remove(updateTag);
