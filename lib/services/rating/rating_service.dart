@@ -18,7 +18,7 @@ class RatingService {
   static final Firestore _firestore = Firestore.instance;
   static final AuthService _authService = AuthService.instance;
 
-  static String _ratingsCollection = "rating";
+  static String _ratingsCollection = "ratings";
 
   static String get ratingsCollection => _ratingsCollection;
 
