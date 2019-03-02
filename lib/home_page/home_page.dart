@@ -34,19 +34,20 @@ class _HomePageState extends State<HomePage> with RouteAware {
   //View related
   List<MenuChoice> _menuChildren;
   int _currentIndex;
-  Widget _mainViewWidget;
 
   //Services
   final TaleService _taleService = TaleService.instance;
   final AuthService _authService = AuthService.instance;
-  final DevService _devService = DevService.instance;
 
   @override
   void initState() {
     super.initState();
 
-    _setMainView(0);
+    _currentIndex = 0;
+    _initMenuChoices();
+  }
 
+  void _initMenuChoices() {
     _menuChildren = []
       ..add(MenuChoice(
           title: "Change Theme",
@@ -91,7 +92,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
                     FlatButton(
                       child: Text("Yes"),
                       onPressed: () {
-                        _devService.updateAllUsers();
+                        DevService.instance.updateAllUsers();
                         Navigator.of(context).pop();
                       },
                     ),
@@ -147,10 +148,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
           ),
         ],
       ),
-      body: _mainViewWidget,
+      body: _getMainView(context),
       bottomNavigationBar: BottomNavigationBar(
         onTap: (index) => setState(() {
-              _setMainView(index);
+              _currentIndex = index;
             }),
         currentIndex: _currentIndex,
         items: [
@@ -171,24 +172,20 @@ class _HomePageState extends State<HomePage> with RouteAware {
     );
   }
 
-  void _setMainView(int index) {
-    _currentIndex = index;
+  Widget _getMainView(BuildContext context) {
     if (_currentIndex == 0) {
-      _mainViewWidget = _getTaleHexGridView();
+      return _getTaleHexGridView();
     } else if (_currentIndex == 1) {
-      _mainViewWidget = _getTaleListView();
+      return _getTaleListView();
     } else if (_currentIndex == 2) {
-      _mainViewWidget = _getAddTaleView();
+      return _getAddTaleView();
     } else {
-      FirebaseAnalyticsService.analytics
-          .logEvent(name: "home_page_main_view_out_of_bounds", parameters: {
-        "index": _currentIndex,
-//              "userReference": _userService.getCurrentUser().reference
-      });
+      FirebaseAnalyticsService.analytics.logEvent(
+          name: "home_page_main_view_out_of_bounds",
+          parameters: {"index": _currentIndex});
 
       //Should never get here, but lets default to hex view
-      _currentIndex = 0;
-      _mainViewWidget = _getTaleHexGridView();
+      return _getTaleHexGridView();
     }
   }
 

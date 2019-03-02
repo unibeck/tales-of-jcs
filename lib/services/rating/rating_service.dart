@@ -1,11 +1,9 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:tales_of_jcs/models/tale/tag.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/models/tale/tale_rating.dart';
 import 'package:tales_of_jcs/services/auth/auth_service.dart';
-import 'package:tales_of_jcs/services/tale/tale_service.dart';
 
 class RatingService {
   //Singleton
@@ -19,9 +17,8 @@ class RatingService {
 
   static final Firestore _firestore = Firestore.instance;
   static final AuthService _authService = AuthService.instance;
-  static final TaleService _taleService = TaleService.instance;
 
-  static String _ratingsCollection = "rating-test";
+  static String _ratingsCollection = "rating";
 
   static String get ratingsCollection => _ratingsCollection;
 
@@ -30,7 +27,8 @@ class RatingService {
     return _firestore.collection(ratingsCollection).add(tagMap);
   }
 
-  Future<Map<String, dynamic>> addRatingToTaleTX(Tale tale, int newRatingValue) async {
+  Future<Map<String, dynamic>> addRatingToTaleTX(
+      Tale tale, int newRatingValue) async {
     //First create the new Rating
     DocumentReference currentUserDocRef =
         await _authService.getCurrentUserDocRef();

@@ -10,7 +10,7 @@ description: The repository of captivating stories from the life of JCS
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.0.0-dev.68.0 <3.0.0"
+  sdk: ">=2.1.0 <3.0.0"
 
 dependencies:
   flutter:
@@ -19,7 +19,7 @@ dependencies:
   quiver: ^2.0.1
   after_layout: ^1.0.7
   dynamic_theme: ^1.0.1
-  hexagonal_grid_widget: ^1.0.1
+  hexagonal_grid_widget: ^1.0.2
   hexagonal_grid: ^1.0.5
   cupertino_icons: ^0.1.2
   cloud_firestore: ^0.9.5+1

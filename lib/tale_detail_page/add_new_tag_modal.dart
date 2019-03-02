@@ -6,7 +6,6 @@ import 'package:tales_of_jcs/models/tale/tag.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
 import 'package:tales_of_jcs/services/tag/tag_service.dart';
-import 'package:tales_of_jcs/services/tale/tale_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
 import 'package:tales_of_jcs/utils/progress_state.dart';
 
@@ -28,7 +27,6 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
   StreamSubscription<DocumentSnapshot> _taleSnapshotSubscription;
 
   ProgressState _saveTagProgressState = ProgressState.IDLE;
-  String _saveTagMessage;
   Timer _showErrorSavingTagTimer;
   Timer _showSuccessSavingTagTimer;
 
@@ -193,12 +191,10 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
       updateTaleFuture.then((Map<String, dynamic> result) {
         setState(() {
           _saveTagProgressState = ProgressState.SUCCESS;
-          _saveTagMessage = result["message"];
         });
 
         _showSuccessSavingTagTimer?.cancel();
-        _showSuccessSavingTagTimer =
-            Timer(Duration(seconds: 3), () async {
+        _showSuccessSavingTagTimer = Timer(Duration(seconds: 2), () async {
           Navigator.of(context).pop();
         });
       }).catchError((error) {
@@ -215,8 +211,7 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
         });
 
         _showErrorSavingTagTimer?.cancel();
-        _showErrorSavingTagTimer =
-            Timer(Duration(seconds: 3), () async {
+        _showErrorSavingTagTimer = Timer(Duration(seconds: 3), () async {
           setState(() {
             _saveTagProgressState = ProgressState.IDLE;
           });

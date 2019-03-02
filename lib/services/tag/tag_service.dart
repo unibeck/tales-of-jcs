@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tales_of_jcs/models/tale/tag.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/services/auth/auth_service.dart';
-import 'package:tales_of_jcs/services/tale/tale_service.dart';
 
 class TagService {
   //Singleton
@@ -18,9 +17,8 @@ class TagService {
 
   static final Firestore _firestore = Firestore.instance;
   static final AuthService _authService = AuthService.instance;
-  static final TaleService _taleService = TaleService.instance;
 
-  static String _tagsCollection = "tags-test";
+  static String _tagsCollection = "tags";
 
   static String get tagsCollection => _tagsCollection;
 
@@ -124,7 +122,7 @@ class TagService {
   /// current user. That is if the current user liked the tag, this will unlike
   /// it and if they have yet to like the tag, this will like it
   Future<Map<String, dynamic>> updateLikeForTag(
-      DocumentReference tagRef) async {
+      DocumentReference taleRef, DocumentReference tagRef) async {
     DocumentReference currentUserDocRef =
         await _authService.getCurrentUserDocRef();
 
@@ -154,6 +152,9 @@ class TagService {
 
         if (newLikedByUsers == null || newLikedByUsers.isEmpty) {
           await tx.delete(tag.reference);
+          await tx.update(taleRef, <String, dynamic>{
+            "tags": FieldValue.arrayRemove([tag.reference])
+          });
         } else {
           await tx.update(tag.reference,
               <String, dynamic>{"likedByUsers": newLikedByUsers});

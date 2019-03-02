@@ -197,13 +197,8 @@ class _TagDetailsState extends State<TagDetails> {
     });
 
     try {
-      print(
-          "The current liked users are: ${updateTag.likedByUsers.map((ref) => ref.documentID).join(", ")}");
-      Map<String, dynamic> result =
-          await _tagService.updateLikeForTag(updateTag.reference);
-      print(result["isLiked"]);
-      print(
-          "The new liked users are: ${result["likedByUsers"].map((ref) => ref.documentID).join(", ")}");
+      Map<String, dynamic> result = await _tagService.updateLikeForTag(
+          widget.tale.reference, updateTag.reference);
 
       //Emulate the updateTag method, but without any DB calls since immediate
       // calls are not consistent with the DB (don't know why).

@@ -45,9 +45,11 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     _authService.getCurrentUserDocRef().then((DocumentReference userRef) {
       userRef.get().then((DocumentSnapshot userSnapshot) {
         User user = User.fromSnapshot(userSnapshot);
-        setState(() {
-          _currentUser = user;
-        });
+        if (mounted) {
+          setState(() {
+            _currentUser = user;
+          });
+        }
       });
     });
   }
