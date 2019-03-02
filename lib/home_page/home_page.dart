@@ -9,6 +9,7 @@ import 'package:tales_of_jcs/home_page/tale_list_view/tale_list_widget.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
 import 'package:tales_of_jcs/services/auth/auth_service.dart';
+import 'package:tales_of_jcs/services/dev/dev_service.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 import 'package:tales_of_jcs/splash_screen/SplashScreen.dart';
 import 'package:tales_of_jcs/tale_detail_page/tale_detail_page.dart';
@@ -33,7 +34,6 @@ class _HomePageState extends State<HomePage> with RouteAware {
   //View related
   List<MenuChoice> _menuChildren;
   int _currentIndex;
-  Widget _mainViewWidget;
 
   //Services
   final TaleService _taleService = TaleService.instance;
@@ -43,8 +43,11 @@ class _HomePageState extends State<HomePage> with RouteAware {
   void initState() {
     super.initState();
 
-    _setMainView(0);
+    _currentIndex = 0;
+    _initMenuChoices();
+  }
 
+  void _initMenuChoices() {
     _menuChildren = []
       ..add(MenuChoice(
           title: "Change Theme",
@@ -58,13 +61,48 @@ class _HomePageState extends State<HomePage> with RouteAware {
       ..add(MenuChoice(
           title: "Logout",
           icon: Icons.exit_to_app,
-          //TODO: Make actually logout call
           onSelected: (context) {
             _authService.signOut().then((_) {
               return Navigator.pushReplacementNamed(
                   context, SplashScreen.routeName);
             });
           }));
+
+    //Only runs in debug mode, to help with quicker development
+    assert(() {
+      _menuChildren.add(MenuChoice(
+          title: "Run dev function",
+          icon: Icons.exit_to_app,
+          onSelected: (context) {
+            showDialog(
+              barrierDismissible: false,
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("Are you sure you want to run this dev function"),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  actions: <Widget>[
+                    FlatButton(
+                      child: Text("Close"),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    FlatButton(
+                      child: Text("Yes"),
+                      onPressed: () {
+                        DevService.instance.updateAllUsers();
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          }));
+      return true;
+    }());
   }
 
   @override
@@ -76,6 +114,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
   @override
   void dispose() {
     FirebaseAnalyticsService.observer.unsubscribe(this);
+
     super.dispose();
   }
 
@@ -109,10 +148,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
           ),
         ],
       ),
-      body: _mainViewWidget,
+      body: _getMainView(context),
       bottomNavigationBar: BottomNavigationBar(
         onTap: (index) => setState(() {
-              _setMainView(index);
+              _currentIndex = index;
             }),
         currentIndex: _currentIndex,
         items: [
@@ -133,24 +172,20 @@ class _HomePageState extends State<HomePage> with RouteAware {
     );
   }
 
-  void _setMainView(int index) {
-    _currentIndex = index;
+  Widget _getMainView(BuildContext context) {
     if (_currentIndex == 0) {
-      _mainViewWidget = _getTaleHexGridView();
+      return _getTaleHexGridView();
     } else if (_currentIndex == 1) {
-      _mainViewWidget = _getTaleListView();
+      return _getTaleListView();
     } else if (_currentIndex == 2) {
-      _mainViewWidget = _getAddTaleView();
+      return _getAddTaleView();
     } else {
-      FirebaseAnalyticsService.analytics
-          .logEvent(name: "home_page_main_view_out_of_bounds", parameters: {
-        "index": _currentIndex,
-//              "userReference": _userService.getCurrentUser().reference
-      });
+      FirebaseAnalyticsService.analytics.logEvent(
+          name: "home_page_main_view_out_of_bounds",
+          parameters: {"index": _currentIndex});
 
       //Should never get here, but lets default to hex view
-      _currentIndex = 0;
-      _mainViewWidget = _getTaleHexGridView();
+      return _getTaleHexGridView();
     }
   }
 
@@ -158,21 +193,38 @@ class _HomePageState extends State<HomePage> with RouteAware {
     return StreamBuilder<QuerySnapshot>(
       stream: _taleService.talesStream,
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
-
-        return HexGridWidget(
-            children: snapshot.data.documents.map((DocumentSnapshot snapshot) {
-              final Tale tale = Tale.fromSnapshot(snapshot);
-              return TaleHexGridChild(
-                  tale: tale,
-                  onTap: () {
-                    //Use unique route to assist in animation
-                    Navigator.push(context, TaleDetailPageRoute(tale: tale));
-                  });
-            }).toList(),
-            hexGridContext: HexGridContext(_minHexWidgetSize, _maxHexWidgetSize,
-                _scaleFactor, _densityFactor, _velocityFactor));
+        } else if (snapshot.data.documents.length == 0) {
+          return Padding(
+            padding: const EdgeInsets.all(48),
+            child: Center(
+              child: Text(
+                "No tales have been added yet, go to the Add Tale tab to create the first!",
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.subhead,
+              ),
+            ),
+          );
+        } else {
+          return HexGridWidget(
+              children:
+                  snapshot.data.documents.map((DocumentSnapshot snapshot) {
+                final Tale tale = Tale.fromSnapshot(snapshot);
+                return TaleHexGridChild(
+                    tale: tale,
+                    onTap: () {
+                      //Use unique route to assist in animation
+                      Navigator.push(context, TaleDetailPageRoute(tale: tale));
+                    });
+              }).toList(),
+              hexGridContext: HexGridContext(
+                  _minHexWidgetSize,
+                  _maxHexWidgetSize,
+                  _scaleFactor,
+                  _densityFactor,
+                  _velocityFactor));
+        }
       },
     );
   }
@@ -181,18 +233,30 @@ class _HomePageState extends State<HomePage> with RouteAware {
     return StreamBuilder<QuerySnapshot>(
       stream: _taleService.talesStream,
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
-
-        return Container(
-            color: Theme.of(context).backgroundColor,
-            child: ListView.builder(
-                itemCount: snapshot.data.documents.length,
-                itemBuilder: (context, index) {
-                  final Tale tale =
-                      Tale.fromSnapshot(snapshot.data.documents[index]);
-                  return TaleListWidget.fromTale(tale);
-                }));
+        } else if (snapshot.data.documents.length == 0) {
+          return Padding(
+            padding: const EdgeInsets.all(48),
+            child: Center(
+              child: Text(
+                "No tales have been added yet, go to the Add Tale tab to create the first!",
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.subhead,
+              ),
+            ),
+          );
+        } else {
+          return Container(
+              color: Theme.of(context).backgroundColor,
+              child: ListView.builder(
+                  itemCount: snapshot.data.documents.length,
+                  itemBuilder: (context, index) {
+                    final Tale tale =
+                        Tale.fromSnapshot(snapshot.data.documents[index]);
+                    return TaleListWidget.fromTale(tale);
+                  }));
+        }
       },
     );
   }

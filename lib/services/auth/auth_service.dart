@@ -31,7 +31,7 @@ class AuthService {
     GoogleSignInAccount googleUser = _googleSignIn.currentUser;
     if (googleUser == null) {
       // Attempt to sign in without user interaction
-      googleUser = await _googleSignIn.signInSilently().catchError(() => null);
+      googleUser = await _googleSignIn.signInSilently();
     }
     if (googleUser == null) {
       // Force the user to interactively sign in

@@ -5,19 +5,36 @@ import 'package:tales_of_jcs/models/tale/tale.dart';
 
 class TaleService {
   //Singleton
-  TaleService._internal();
+  TaleService._internal() {
+//    talesCollectionsSubscription = _firestore
+//        .collection(talesCollection)
+//        .snapshots()
+//        .listen((QuerySnapshot snapshot) {});
+  }
+
   static final TaleService _instance = TaleService._internal();
+
   static TaleService get instance {
     return _instance;
   }
 
   static final Firestore _firestore = Firestore.instance;
 
-  static String _talesCollection = "tales-test";
+  static String _talesCollection = "tales";
+
   static String get talesCollection => _talesCollection;
 
-  final Stream<QuerySnapshot> talesStream =
-      Firestore.instance.collection(talesCollection).snapshots();
+  Stream<QuerySnapshot> get talesStream =>
+      _firestore.collection(talesCollection).snapshots();
+
+  Future<List<Tale>> retrieveTalesCollection() async {
+    QuerySnapshot querySnapshot =
+        await _firestore.collection(talesCollection).getDocuments();
+
+    return querySnapshot.documents.map((DocumentSnapshot taleSnapshot) {
+      return Tale.fromSnapshot(taleSnapshot);
+    }).toList();
+  }
 
   Future<void> createTale(Tale tale) {
     Map<String, dynamic> taleMap = tale.toMap();
@@ -27,17 +44,5 @@ class TaleService {
     });
 
     return _firestore.collection(talesCollection).document().setData(taleMap);
-  }
-
-  Future<void> updateAllTales() async {
-    _firestore.collection(talesCollection).snapshots().first.then((QuerySnapshot querySnapshot) {
-      querySnapshot.documents.forEach((DocumentSnapshot docSnapshot) async {
-        Tale tale = Tale.fromSnapshot(docSnapshot);
-//        await tale.reference.updateData(<String, dynamic>{"tags": FieldValue.delete()});
-        await tale.reference.updateData(<String, dynamic>{"publisher": _firestore.document("users/QtjwqNcrT9eQBzAFvuZmrEiFLtj2")});
-        print(tale.title);
-      });
-    });
-
   }
 }

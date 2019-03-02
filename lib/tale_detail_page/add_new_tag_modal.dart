@@ -6,8 +6,8 @@ import 'package:tales_of_jcs/models/tale/tag.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
 import 'package:tales_of_jcs/services/tag/tag_service.dart';
-import 'package:tales_of_jcs/services/tale/tale_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
+import 'package:tales_of_jcs/utils/progress_state.dart';
 
 class AddNewTagModal extends StatefulWidget {
   static const String routeName = "/AddNewTagModal";
@@ -26,29 +26,26 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
   List<String> _tagTitles;
   StreamSubscription<DocumentSnapshot> _taleSnapshotSubscription;
 
-  bool _showUpdatingProgressIndicator = false;
-  bool _errorSavingTag = false;
+  ProgressState _saveTagProgressState = ProgressState.IDLE;
   Timer _showErrorSavingTagTimer;
+  Timer _showSuccessSavingTagTimer;
 
   bool _hasValidationError = false;
   String _newTagStr;
 
   //Services
-  final TaleService _taleService = TaleService.instance;
   final TagService _tagService = TagService.instance;
 
   @override
   void initState() {
     super.initState();
 
-    _taleSnapshotSubscription = widget.tale.reference
-        .snapshots()
-        .listen((DocumentSnapshot snapshot) {
+    _taleSnapshotSubscription =
+        widget.tale.reference.snapshots().listen((DocumentSnapshot snapshot) {
       Tale updatedTale = Tale.fromSnapshot(snapshot);
 
       if (updatedTale.tags != null) {
-        Future.wait(
-            updatedTale.tags.map((DocumentReference reference) async {
+        Future.wait(updatedTale.tags.map((DocumentReference reference) async {
           DocumentSnapshot snapshot = await reference.get();
           return Tag.fromSnapshot(snapshot);
         })).then((List<Tag> tags) {
@@ -68,6 +65,7 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
   @override
   void dispose() {
     _showErrorSavingTagTimer?.cancel();
+    _showSuccessSavingTagTimer?.cancel();
     _taleSnapshotSubscription?.cancel();
 
     super.dispose();
@@ -108,8 +106,10 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
   }
 
   Widget _getCardTextContent() {
-    if (_errorSavingTag) {
+    if (_saveTagProgressState == ProgressState.ERROR) {
       return Text("There was an error saving the tag, please try again later");
+    } else if (_saveTagProgressState == ProgressState.SUCCESS) {
+      return Text("$_newTagStr was successfully added");
     } else {
       return Form(
         key: _formKey,
@@ -159,10 +159,12 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
   }
 
   Widget _getCardActionContent() {
-    if (_showUpdatingProgressIndicator) {
+    if (_saveTagProgressState == ProgressState.LOADING) {
       return CircularProgressIndicator();
-    } else if (_errorSavingTag) {
+    } else if (_saveTagProgressState == ProgressState.ERROR) {
       return Icon(Icons.error, color: Colors.red, size: 48);
+    } else if (_saveTagProgressState == ProgressState.SUCCESS) {
+      return Icon(Icons.check_circle, color: Colors.green, size: 48);
     } else {
       return FloatingActionButton(
         heroTag: TagModalManifest.getNewChipAddIconHeroTag(),
@@ -179,15 +181,23 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
     if (_formKey.currentState.validate()) {
       _formKey.currentState.save();
 
-      Future<void> updateTaleFuture =
+      Future<Map<String, dynamic>> updateTaleFuture =
           _tagService.addTagToTaleTX(widget.tale.reference, _newTagStr);
+
       setState(() {
-        _showUpdatingProgressIndicator = true;
+        _saveTagProgressState = ProgressState.LOADING;
       });
 
-      updateTaleFuture.then((_) {
-        Navigator.of(context).pop();
-      }).catchError((Error error) {
+      updateTaleFuture.then((Map<String, dynamic> result) {
+        setState(() {
+          _saveTagProgressState = ProgressState.SUCCESS;
+        });
+
+        _showSuccessSavingTagTimer?.cancel();
+        _showSuccessSavingTagTimer = Timer(Duration(seconds: 2), () async {
+          Navigator.of(context).pop();
+        });
+      }).catchError((error) {
         FirebaseAnalyticsService.analytics
             .logEvent(name: "failed_to_add_tag_to_existing_tale", parameters: {
           "taleReference": widget.tale.reference.toString(),
@@ -197,16 +207,13 @@ class _AddNewTagModalState extends State<AddNewTagModal> {
         print("Error: $error");
 
         setState(() {
-          _showUpdatingProgressIndicator = false;
-          _errorSavingTag = true;
+          _saveTagProgressState = ProgressState.ERROR;
         });
 
         _showErrorSavingTagTimer?.cancel();
-        _showErrorSavingTagTimer =
-            Timer.periodic(Duration(seconds: 3), (Timer timer) async {
+        _showErrorSavingTagTimer = Timer(Duration(seconds: 3), () async {
           setState(() {
-            _showUpdatingProgressIndicator = false;
-            _errorSavingTag = false;
+            _saveTagProgressState = ProgressState.IDLE;
           });
         });
       });

@@ -1,17 +1,21 @@
-import 'package:tales_of_jcs/models/user/user.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TaleRating {
-  double rating;
-  User reviewer;
+  DocumentReference reference;
+  int rating;
+  DocumentReference reviewer;
 
   TaleRating(this.rating, this.reviewer);
 
-  TaleRating.fromJson(Map<String, dynamic> json)
-      : rating = json['rating'],
-        reviewer = json['reviewer'];
+  TaleRating.fromMap(Map<String, dynamic> map, {this.reference})
+      : rating = map["rating"],
+        reviewer = map["reviewer"];
 
-  Map<String, dynamic> toJson() => {
-        'rating': rating,
-        'reviewer': reviewer,
+  TaleRating.fromSnapshot(DocumentSnapshot snapshot)
+      : this.fromMap(snapshot.data, reference: snapshot.reference);
+
+  Map<String, dynamic> toMap() => {
+        "rating": rating,
+        "reviewer": reviewer,
       };
 }

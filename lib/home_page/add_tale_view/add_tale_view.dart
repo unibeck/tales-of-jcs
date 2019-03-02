@@ -16,7 +16,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final GlobalKey<FormFieldState> _tagFormFieldKey =
       GlobalKey<FormFieldState>();
-  final int _maxTaleTitleLength = 20;
+  final int _maxTaleTitleLength = 35;
 
   FocusNode _tagFormFieldFocusNode;
   bool _finalCheckBeforeSubmit;
