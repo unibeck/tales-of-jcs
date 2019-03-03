@@ -38,31 +38,7 @@ class UserService {
       } else {
         //If the user doesn't exist, lets add them to the user table
         User newUser = User.fromFirebaseUser(fbUser,
-            latestLogin: Timestamp.now(),
-            latestLogout: Timestamp.now(),
-            isAdmin: false);
-        await tx.set(userRef, newUser.toMap());
-      }
-    });
-  }
-
-  Future<void> updateUserLatestLogout(FirebaseUser fbUser) async {
-    final DocumentReference userRef =
-        _firestore.document("$usersCollection/${fbUser.uid}");
-
-    _firestore.runTransaction((Transaction tx) async {
-      DocumentSnapshot taleSnapshot = await tx.get(userRef);
-      if (taleSnapshot.exists) {
-        await tx.update(
-            userRef, <String, dynamic>{"latestLogout": Timestamp.now()});
-      } else {
-        //We should never into a situation where a user can logout, but is not
-        // in the user table. Though if we do, let's create a user in the user
-        // table
-        User newUser = User.fromFirebaseUser(fbUser,
-            latestLogin: Timestamp.now(),
-            latestLogout: Timestamp.now(),
-            isAdmin: false);
+            latestLogin: Timestamp.now(), isAdmin: false);
         await tx.set(userRef, newUser.toMap());
       }
     });

@@ -5,7 +5,7 @@ import 'package:fluro/fluro.dart';
 import 'package:flutter/material.dart';
 import 'package:tales_of_jcs/home_page/home_page.dart';
 import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
-import 'package:tales_of_jcs/splash_screen/SplashScreen.dart';
+import 'package:tales_of_jcs/splash_screen/splash_screen.dart';
 import 'package:tales_of_jcs/utils/primary_app_theme.dart';
 
 void main() {

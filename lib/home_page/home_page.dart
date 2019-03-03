@@ -11,7 +11,7 @@ import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart'
 import 'package:tales_of_jcs/services/auth/auth_service.dart';
 import 'package:tales_of_jcs/services/dev/dev_service.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
-import 'package:tales_of_jcs/splash_screen/SplashScreen.dart';
+import 'package:tales_of_jcs/splash_screen/splash_screen.dart';
 import 'package:tales_of_jcs/tale_detail_page/tale_detail_page.dart';
 
 class HomePage extends StatefulWidget {
