@@ -7,25 +7,23 @@ class User {
   final String email;
   final String photoUrl;
   final Timestamp latestLogin;
-  final Timestamp latestLogout;
   final bool isAdmin;
 
   User(this.reference, this.name, this.email, this.photoUrl, this.latestLogin,
-      this.latestLogout, this.isAdmin);
+      this.isAdmin);
 
   User.fromMap(Map<String, dynamic> map, {this.reference})
       : name = map["name"],
         email = map["email"],
         photoUrl = map["photoUrl"],
         latestLogin = map["latestLogin"],
-        latestLogout = map["latestLogout"],
         isAdmin = map["isAdmin"];
 
   User.fromSnapshot(DocumentSnapshot snapshot)
       : this.fromMap(snapshot.data, reference: snapshot.reference);
 
   User.fromFirebaseUser(FirebaseUser fbUser,
-      {this.reference, this.latestLogin, this.latestLogout, this.isAdmin})
+      {this.reference, this.latestLogin, this.isAdmin})
       : name = fbUser.displayName,
         email = fbUser.email,
         photoUrl = fbUser.photoUrl;
@@ -35,7 +33,6 @@ class User {
         "email": email,
         "photoUrl": photoUrl,
         "latestLogin": latestLogin,
-        "latestLogout": latestLogout,
         "isAdmin": isAdmin,
       };
 }

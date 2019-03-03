@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:tales_of_jcs/home_page/home_page.dart';
 import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
 import 'package:tales_of_jcs/services/auth/auth_service.dart';
+import 'package:tales_of_jcs/splash_screen/splash_screen_login_button.dart';
 import 'package:tales_of_jcs/utils/primary_app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -26,7 +27,6 @@ class _SplashScreenState extends State<SplashScreen>
   Timer _splashScreenTimer;
 
   bool _showLoginButton = false;
-  bool _isLoggingIn = false;
 
   //Services
   final AuthService _authService = AuthService.instance;
@@ -48,9 +48,9 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _jcsMovementAnimation = Tween<double>(begin: 1.0, end: 0.0)
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut))
-      ..addListener(() {
-        setState(() {});
-      });
+          ..addListener(() {
+            setState(() {});
+          });
     _controller.forward();
 
     _authService.getCurrentUser().then((FirebaseUser user) {
@@ -66,6 +66,17 @@ class _SplashScreenState extends State<SplashScreen>
           _showLoginButton = true;
         });
       }
+    }).catchError((error) {
+      String errorMessage;
+      if (error is AuthException) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = error.toString();
+      }
+
+      FirebaseAnalyticsService.analytics.logEvent(
+          name: "failed_to_get_auth_user_on_app_open",
+          parameters: {"error": errorMessage});
     });
   }
 
@@ -89,28 +100,16 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Padding(
                   padding: EdgeInsets.only(top: 96),
                   child: Column(
-                    children: List.unmodifiable(() sync* {
-                      yield Text(
+                    children: <Widget>[
+                      Text(
                         "Tales of JCS",
-                        style: Theme
-                            .of(context)
-                            .textTheme
-                            .headline
-                            .copyWith(
+                        style: Theme.of(context).textTheme.headline.copyWith(
                             color: Colors.white,
                             fontSize: 48,
                             fontFamily: "Roboto"),
-                      );
-                      if (_showLoginButton) {
-                        yield _loginButton();
-                      }
-                      if (_isLoggingIn) {
-                        yield Padding(
-                          padding: EdgeInsets.only(top: 64),
-                          child: CircularProgressIndicator(),
-                        );
-                      }
-                    }()),
+                      ),
+                      SplashScreenButton()
+                    ],
                   ),
                 )),
             FutureBuilder(
@@ -130,7 +129,7 @@ class _SplashScreenState extends State<SplashScreen>
                         decoration: BoxDecoration(
                           image: DecorationImage(
                               image:
-                              AssetImage("assets/images/unicorn_jcs.png"),
+                                  AssetImage("assets/images/unicorn_jcs.png"),
                               fit: BoxFit.fill),
                         ),
                       ),
@@ -154,65 +153,6 @@ class _SplashScreenState extends State<SplashScreen>
         .addListener(
             (ImageInfo info, bool _) => completer.complete(info.image));
     return completer.future;
-  }
-
-  Widget _loginButton() {
-    return Container(
-      height: 48,
-      margin: EdgeInsets.only(top: 64),
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-                color: PrimaryAppTheme.accentYaleColorSwatch.shade300,
-                offset: Offset(0, 8),
-                blurRadius: 16,
-                spreadRadius: -2),
-          ],
-          gradient: LinearGradient(
-            colors: [
-              PrimaryAppTheme.accentYaleColorSwatch.shade900,
-              PrimaryAppTheme.accentYaleColorSwatch.shade300,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          )),
-      child: RawMaterialButton(
-        highlightColor: PrimaryAppTheme.accentYaleColorSwatch.shade500,
-        padding: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        onPressed: _isLoggingIn ? null : _loginAction,
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 36),
-          child: Text(
-            "LOGIN",
-            style: TextStyle(
-                color: Colors.white, fontSize: 24, fontFamily: "Roboto"),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _loginAction() {
-    setState(() {
-      _isLoggingIn = true;
-      _showLoginButton = false;
-    });
-
-    _authService.signIn().then((FirebaseUser user) {
-      Navigator.pushReplacementNamed(context, HomePage.routeName);
-    }).catchError((error) {
-      setState(() {
-        _isLoggingIn = false;
-        _showLoginButton = true;
-      });
-
-      FirebaseAnalyticsService.analytics.logEvent(
-          name: "failed_to_login",
-          parameters: {"error": error.toString()});
-      print("Error: $error");
-    });
   }
 }
 
