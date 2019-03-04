@@ -1,15 +1,10 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
-import 'package:tales_of_jcs/models/tale/tag.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/services/analytics/firebase_analytics_service.dart';
 import 'package:tales_of_jcs/services/rating/rating_service.dart';
-import 'package:tales_of_jcs/services/tag/tag_service.dart';
-import 'package:tales_of_jcs/services/tale/tale_service.dart';
-import 'package:tales_of_jcs/tale_detail_page/tag_modal_manifest.dart';
 import 'package:tales_of_jcs/utils/progress_state.dart';
 
 typedef OnRatingChange = void Function(double value);
@@ -149,8 +144,8 @@ class _TaleRatingDialogContentState extends State<TaleRatingDialogContent> {
   }
 
   void _saveRating() {
-    Future<Map<String, dynamic>> addRatingFuture =
-        _ratingService.addRatingToTaleTX(widget.tale, _userSelectedRating);
+    Future<Map<String, dynamic>> addRatingFuture = _ratingService
+        .addRatingToTaleTX(widget.tale.reference, _userSelectedRating);
 
     setState(() {
       _saveRatingProgressState = ProgressState.LOADING;
@@ -163,8 +158,7 @@ class _TaleRatingDialogContentState extends State<TaleRatingDialogContent> {
       });
 
       _showSuccessSavingRatingTimer?.cancel();
-      _showSuccessSavingRatingTimer =
-          Timer(Duration(seconds: 3), () async {
+      _showSuccessSavingRatingTimer = Timer(Duration(seconds: 3), () async {
         Navigator.of(context).pop();
       });
     }).catchError((error) {
@@ -181,8 +175,7 @@ class _TaleRatingDialogContentState extends State<TaleRatingDialogContent> {
       });
 
       _showErrorSavingRatingTimer?.cancel();
-      _showErrorSavingRatingTimer =
-          Timer(Duration(seconds: 3), () async {
+      _showErrorSavingRatingTimer = Timer(Duration(seconds: 3), () async {
         setState(() {
           _saveRatingProgressState = ProgressState.IDLE;
         });

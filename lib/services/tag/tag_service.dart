@@ -7,7 +7,13 @@ import 'package:tales_of_jcs/services/auth/auth_service.dart';
 
 class TagService {
   //Singleton
-  TagService._internal();
+  TagService._internal() {
+    //Only runs in debug mode, set the database to dev
+    assert(() {
+      _tagsCollection = "tags-dev";
+      return true;
+    }());
+  }
 
   static final TagService _instance = TagService._internal();
 
