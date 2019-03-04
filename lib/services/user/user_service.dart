@@ -6,7 +6,13 @@ import 'package:tales_of_jcs/models/user/user.dart';
 
 class UserService {
   //Singleton
-  UserService._internal();
+  UserService._internal() {
+    //Only runs in debug mode, set the database to dev
+    assert(() {
+      _usersCollection = "users-dev";
+      return true;
+    }());
+  }
 
   static final UserService _instance = UserService._internal();
 

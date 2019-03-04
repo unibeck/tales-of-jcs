@@ -7,7 +7,13 @@ import 'package:tales_of_jcs/services/auth/auth_service.dart';
 
 class RatingService {
   //Singleton
-  RatingService._internal();
+  RatingService._internal() {
+    //Only runs in debug mode, set the database to dev
+    assert(() {
+      _ratingsCollection = "ratings-dev";
+      return true;
+    }());
+  }
 
   static final RatingService _instance = RatingService._internal();
 
@@ -27,47 +33,62 @@ class RatingService {
     return _firestore.collection(ratingsCollection).add(tagMap);
   }
 
+  ///Add a rating to the tale for a user if he doesn't already have one or
+  /// update (create new/delete old) if he has already rated the tale. The
+  /// reason we create a new rating and delete the old one is so listeners of
+  /// the tale will see the rating references updated. If we simple updated the
+  /// rating value of the pre-existing rating record, listeners of the tale
+  /// wouldn't be notified since none of the rating references were updated.
   Future<Map<String, dynamic>> addRatingToTaleTX(
-      Tale tale, int newRatingValue) async {
+      DocumentReference taleRef, int newRatingValue) async {
     //First create the new Rating
     DocumentReference currentUserDocRef =
         await _authService.getCurrentUserDocRef();
+
+    //Need to create the new Rating outside of the transaction so we have the
+    // reference to add to the tale rating list
     DocumentReference newRatingRef =
         await createNewRating(TaleRating(newRatingValue, currentUserDocRef));
 
     return _firestore.runTransaction((Transaction tx) async {
       //Get latest record of the tale
-      //TODO: This doesn't work as a transaction
-      //DocumentSnapshot taleSnapshot = await tx.get(tale.reference);
+      DocumentSnapshot taleSnapshot = await tx.get(taleRef);
 
-      List<DocumentReference> newRatingRefList;
-      if (tale.ratings != null) {
-        List<TaleRating> ratings = await Future.wait(
-            tale.ratings.map((DocumentReference reference) async {
-          DocumentSnapshot snapshot = await tx.get(reference);
-          return TaleRating.fromSnapshot(snapshot);
-        }));
+      if (taleSnapshot.exists) {
+        Tale tale = Tale.fromSnapshot(taleSnapshot);
 
-        for (TaleRating rating in ratings) {
-          //Let's prevent duplicate ratings
-          if (rating.reviewer == currentUserDocRef) {
-            await tx.update(
-                rating.reference, <String, dynamic>{"rating": newRatingValue});
+        if (tale.ratings != null) {
+          for (DocumentReference ratingRef in tale.ratings) {
+            DocumentSnapshot snapshot = await ratingRef.get();
+            TaleRating rating = TaleRating.fromSnapshot(snapshot);
 
-            await tx.delete(newRatingRef);
-            return {"message": "Your rating has been updated!"};
+            if (rating.reviewer == currentUserDocRef) {
+              //Add the new rating reference to the tale
+              await tx.update(tale.reference, <String, dynamic>{
+                "ratings": FieldValue.arrayUnion([newRatingRef])
+              });
+
+              //Remove the old rating reference from the tale
+              await tx.update(tale.reference, <String, dynamic>{
+                "ratings": FieldValue.arrayRemove([ratingRef])
+              });
+
+              //Delete the old rating since we added a new one
+              await tx.delete(ratingRef);
+
+              return {"message": "Your rating has been updated!"};
+            }
           }
         }
 
-        //If we got here then it is safe to add the new rating
-        newRatingRefList = List.from(tale.ratings)..add(newRatingRef);
+        await tx.update(taleSnapshot.reference, <String, dynamic>{
+          "ratings": FieldValue.arrayUnion([newRatingRef])
+        });
+        return {"message": "Rating submited!"};
       } else {
-        newRatingRefList = [newRatingRef];
+        throw StateError(
+            "The taleRef provided [${taleRef?.toString()}] does not exist in the database.");
       }
-
-      await tx.update(
-          tale.reference, <String, dynamic>{"ratings": newRatingRefList});
-      return {"message": "Rating submited!"};
     }).catchError((error) async {
       //Delete the new rating ref we created before the transaction if anything
       // fails

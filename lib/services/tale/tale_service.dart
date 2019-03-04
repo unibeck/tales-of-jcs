@@ -6,10 +6,11 @@ import 'package:tales_of_jcs/models/tale/tale.dart';
 class TaleService {
   //Singleton
   TaleService._internal() {
-//    talesCollectionsSubscription = _firestore
-//        .collection(talesCollection)
-//        .snapshots()
-//        .listen((QuerySnapshot snapshot) {});
+    //Only runs in debug mode, set the database to dev
+    assert(() {
+      _talesCollection = "tales-dev";
+      return true;
+    }());
   }
 
   static final TaleService _instance = TaleService._internal();

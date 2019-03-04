@@ -78,7 +78,14 @@ class AuthService {
   }
 
   bool isUserJG(String email) {
-    return email != null && email.endsWith("@jahnelgroup.com");
+    bool isUserJG = email != null && email.endsWith("@jahnelgroup.com");
+    //Only runs in debug mode, set the database to dev
+    assert(() {
+      isUserJG = true;
+      return true;
+    }());
+
+    return isUserJG;
   }
 
   Future<FirebaseUser> getCurrentUser() async {

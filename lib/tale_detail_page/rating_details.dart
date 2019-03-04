@@ -43,17 +43,26 @@ class _RatingDetailsState extends State<RatingDetails> {
   Future<List<TaleRating>> updateRatings(Tale tale) async {
     return Future.wait(tale.ratings.map((DocumentReference reference) async {
       DocumentSnapshot snapshot = await reference.get();
+      if (snapshot == null || !snapshot.exists) {
+        return null;
+      }
+
       return TaleRating.fromSnapshot(snapshot);
     })).then((List<TaleRating> ratings) {
       Timer(Duration(seconds: 1), () async {
         if (mounted) {
           setState(() {
             widget.tale = tale;
-            _ratings = ratings;
-            _averageRating = _ratings
-                    .map((TaleRating rating) => rating.rating)
-                    .reduce((a, b) => a + b) /
-                _ratings.length;
+            _ratings = ratings.where((value) => value != null).toList();
+            if (_ratings != null && _ratings.isNotEmpty) {
+              _averageRating = _ratings
+                      .map((TaleRating rating) => rating.rating)
+                      .reduce((a, b) => a + b) /
+                  _ratings.length;
+            } else {
+              _ratings = null;
+              _averageRating = null;
+            }
           });
         }
       });
