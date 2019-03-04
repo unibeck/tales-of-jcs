@@ -95,7 +95,9 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                 title: Card(
                   elevation: 0,
                   margin: EdgeInsets.zero,
-                  color: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
+                  color: PrimaryAppTheme.primaryColorSwatch(
+                          Theme.of(context).brightness)
+                      .shade800,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(Radius.circular(12)),
                   ),
@@ -145,12 +147,24 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   Widget _getTextContent() {
     if (_isEditingTaleStory) {
       return TextFormField(
+          autofocus: true,
+          style: TextStyle(color: Colors.white),
+          initialValue: widget.tale.story,
           textCapitalization: TextCapitalization.sentences,
           keyboardType: TextInputType.multiline,
           maxLines: 3,
-//          Theme.of(context).inputDecorationTheme
           decoration: InputDecoration(
-              hintText: "This one time, at band camp...", labelText: "Story"),
+            contentPadding: EdgeInsets.zero,
+            border: OutlineInputBorder(
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide.none,
+            ),
+          ),
           onSaved: (String value) {
             _updatedTaleStory = value;
           },
@@ -229,7 +243,21 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                 //Display a show and cancel button if the user is editing
                 // the tale's story. Otherwise, display the option to edit
                 if (_isEditingTaleStory) {
-                  yield FlatButton(
+                  yield OutlineButton(
+                    borderSide:
+                        BorderSide(color: Theme.of(context).primaryColor),
+                    textColor: Colors.white,
+                    child: Text("CANCEL"),
+                    onPressed: () {
+                      setState(() {
+                        _isEditingTaleStory = false;
+                      });
+                    },
+                  );
+                  yield OutlineButton(
+                    borderSide:
+                        BorderSide(color: Theme.of(context).primaryColor),
+                    textColor: Colors.white,
                     child: Text("SAVE"),
                     onPressed: () {
                       setState(() {
@@ -238,16 +266,11 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                       });
                     },
                   );
-                  yield FlatButton(
-                    child: Text("CANCEL"),
-                    onPressed: () {
-                      setState(() {
-                        _isEditingTaleStory = false;
-                      });
-                    },
-                  );
                 } else {
-                  yield FlatButton(
+                  yield OutlineButton(
+                    borderSide:
+                        BorderSide(color: Theme.of(context).primaryColor),
+                    textColor: Colors.white,
                     child: Text("EDIT"),
                     onPressed: () {
                       setState(() {
@@ -261,8 +284,11 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                   _userService.isUserJCS(_currentUser)) {
                 //Don't display the APPROVE button during editing as it may
                 // confuse the user
-                if (_isEditingTaleStory) {
-                  yield FlatButton(
+                if (!_isEditingTaleStory) {
+                  yield OutlineButton(
+                    borderSide:
+                        BorderSide(color: Theme.of(context).primaryColor),
+                    textColor: Colors.white,
                     child: Text("APPROVE"),
                     onPressed: () {},
                   );
