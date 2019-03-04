@@ -11,6 +11,7 @@ import 'package:tales_of_jcs/tale_detail_page/tale_rating_dialog.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/custom_expansion_tile.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/doppelganger_avatar.dart';
 import 'package:tales_of_jcs/utils/primary_app_theme.dart';
+import 'package:tales_of_jcs/utils/tale_story_utils.dart';
 
 class TaleDetailPage extends StatefulWidget {
   static const String routeName = "/TaleDetailPage";
@@ -32,6 +33,9 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   User _lastModifiedUser;
   bool _loadingLastModifiedUser = false;
 
+  bool _isEditingTaleStory = false;
+  String _updatedTaleStory;
+
   User _currentUser;
 
   //Services
@@ -41,6 +45,8 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
   @override
   void initState() {
     super.initState();
+
+    _updatedTaleStory = "";
 
     _authService.getCurrentUserDocRef().then((DocumentReference userRef) {
       userRef.get().then((DocumentSnapshot userSnapshot) {
@@ -103,13 +109,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                         }
                       },
                       iconColor: Colors.white,
-                      title: Text(
-                        "${widget.tale.story}",
-                        style: Theme.of(context)
-                            .textTheme
-                            .subhead
-                            .copyWith(color: Colors.white),
-                      ),
+                      title: _getTextContent(),
                       children: _storyMetadata(context),
                     ),
                   ),
@@ -142,46 +142,76 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     return MaterialRectCenterArcTween(begin: begin, end: end);
   }
 
-  List<Widget> _storyMetadata(BuildContext context) {
-    List<Widget> storyCardContent = [
-      Divider(color: Theme.of(context).primaryColor)
-    ];
-
-    if (_publisher != null) {
-      storyCardContent.add(ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: DoppelgangerAvatar.buildAvatar(context, _publisher,
-              accountCircleSize: 40),
-          title: Text("Original story published by ${_publisher.name}",
-              style: Theme.of(context)
-                  .textTheme
-                  .body1
-                  .copyWith(color: Colors.white))));
-    } else if (_loadingPublisher) {
-      storyCardContent.add(Text("Loading original publisher",
-          style:
-              Theme.of(context).textTheme.body1.copyWith(color: Colors.white)));
+  Widget _getTextContent() {
+    if (_isEditingTaleStory) {
+      return TextFormField(
+          textCapitalization: TextCapitalization.sentences,
+          keyboardType: TextInputType.multiline,
+          maxLines: 3,
+//          Theme.of(context).inputDecorationTheme
+          decoration: InputDecoration(
+              hintText: "This one time, at band camp...", labelText: "Story"),
+          onSaved: (String value) {
+            _updatedTaleStory = value;
+          },
+          validator: (String value) {
+            return TaleStoryUtils.validateInput(value);
+          });
+    } else {
+      return Text(
+        "${widget.tale.story}",
+        style:
+            Theme.of(context).textTheme.subhead.copyWith(color: Colors.white),
+      );
     }
+  }
 
-    if (widget.tale.dateLastModified != null && _lastModifiedUser != null) {
-      DateFormat formatter = DateFormat.yMMMMd("en_US");
-      String formattedLastModifiedDate =
-          formatter.format(widget.tale.dateLastModified.toDate());
+  List<Widget> _storyMetadata(BuildContext context) {
+    List<Widget> storyCardContent = [];
 
-      storyCardContent.add(ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: DoppelgangerAvatar.buildAvatar(context, _lastModifiedUser,
-              accountCircleSize: 40),
-          title: Text(
-              "Last modified by ${_lastModifiedUser.name} on $formattedLastModifiedDate",
-              style: Theme.of(context)
-                  .textTheme
-                  .body1
-                  .copyWith(color: Colors.white))));
-    } else if (_loadingLastModifiedUser) {
-      storyCardContent.add(Text("Loading last editor",
-          style:
-              Theme.of(context).textTheme.body1.copyWith(color: Colors.white)));
+    if (!_isEditingTaleStory) {
+      storyCardContent.add(Divider(color: Theme.of(context).primaryColor));
+
+      if (_publisher != null) {
+        storyCardContent.add(ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: DoppelgangerAvatar.buildAvatar(context, _publisher,
+                accountCircleSize: 40),
+            title: Text("Original story published by ${_publisher.name}",
+                style: Theme.of(context)
+                    .textTheme
+                    .body1
+                    .copyWith(color: Colors.white))));
+      } else if (_loadingPublisher) {
+        storyCardContent.add(Text("Loading original publisher",
+            style: Theme.of(context)
+                .textTheme
+                .body1
+                .copyWith(color: Colors.white)));
+      }
+
+      if (widget.tale.dateLastModified != null && _lastModifiedUser != null) {
+        DateFormat formatter = DateFormat.yMMMMd("en_US");
+        String formattedLastModifiedDate =
+            formatter.format(widget.tale.dateLastModified.toDate());
+
+        storyCardContent.add(ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: DoppelgangerAvatar.buildAvatar(context, _lastModifiedUser,
+                accountCircleSize: 40),
+            title: Text(
+                "Last modified by ${_lastModifiedUser.name} on $formattedLastModifiedDate",
+                style: Theme.of(context)
+                    .textTheme
+                    .body1
+                    .copyWith(color: Colors.white))));
+      } else if (_loadingLastModifiedUser) {
+        storyCardContent.add(Text("Loading last editor",
+            style: Theme.of(context)
+                .textTheme
+                .body1
+                .copyWith(color: Colors.white)));
+      }
     }
 
     if (_currentUser != null) {
@@ -191,20 +221,52 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
         storyCardContent.add(ButtonTheme.bar(
           child: ButtonBar(
             children: List.unmodifiable(() sync* {
+              //Only the publisher, an admin, or JCS should have the ability to
+              // edit a story
               if (_publisher?.reference == _currentUser.reference ||
                   _currentUser.isAdmin ||
                   _userService.isUserJCS(_currentUser)) {
-                yield FlatButton(
-                  child: Text("EDIT"),
-                  onPressed: () {},
-                );
+                //Display a show and cancel button if the user is editing
+                // the tale's story. Otherwise, display the option to edit
+                if (_isEditingTaleStory) {
+                  yield FlatButton(
+                    child: Text("SAVE"),
+                    onPressed: () {
+                      setState(() {
+                        //TODO: form validate and save
+                        _isEditingTaleStory = false;
+                      });
+                    },
+                  );
+                  yield FlatButton(
+                    child: Text("CANCEL"),
+                    onPressed: () {
+                      setState(() {
+                        _isEditingTaleStory = false;
+                      });
+                    },
+                  );
+                } else {
+                  yield FlatButton(
+                    child: Text("EDIT"),
+                    onPressed: () {
+                      setState(() {
+                        _isEditingTaleStory = true;
+                      });
+                    },
+                  );
+                }
               }
               if (_currentUser.isAdmin ||
                   _userService.isUserJCS(_currentUser)) {
-                yield FlatButton(
-                  child: Text("APPROVE"),
-                  onPressed: () {},
-                );
+                //Don't display the APPROVE button during editing as it may
+                // confuse the user
+                if (_isEditingTaleStory) {
+                  yield FlatButton(
+                    child: Text("APPROVE"),
+                    onPressed: () {},
+                  );
+                }
               }
             }()),
           ),

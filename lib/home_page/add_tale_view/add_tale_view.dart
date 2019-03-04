@@ -6,6 +6,7 @@ import 'package:tales_of_jcs/models/tale/tale.dart';
 import 'package:tales_of_jcs/services/auth/auth_service.dart';
 import 'package:tales_of_jcs/services/tag/tag_service.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
+import 'package:tales_of_jcs/utils/tale_story_utils.dart';
 
 class AddTaleWidget extends StatefulWidget {
   @override
@@ -154,13 +155,7 @@ class _AddTaleWidgetState extends State<AddTaleWidget> {
                         _newTale.story = value;
                       },
                       validator: (String value) {
-                        if (value == null || value.isEmpty) {
-                          return "You must have an interesting JCS story, enter it!";
-                        }
-
-                        if (value.length < 18 || value.split(" ").length < 8) {
-                          return "Come on, put some effort into the story";
-                        }
+                        return TaleStoryUtils.validateInput(value);
                       }),
                 ),
               ),
