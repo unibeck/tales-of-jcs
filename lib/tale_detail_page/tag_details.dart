@@ -347,7 +347,7 @@ class _TagDetailsState extends State<TagDetails> {
                   yield Hero(
                       tag: TagModalManifest.getNewChipAddIconHeroTag(),
                       child: Padding(
-                        padding: const EdgeInsets.only(right: 4),
+                        padding: EdgeInsets.only(right: 4),
                         child: Icon(
                           Icons.add_circle_outline,
                           color: Colors.white,
@@ -355,7 +355,7 @@ class _TagDetailsState extends State<TagDetails> {
                       ));
                 } else {
                   yield Padding(
-                    padding: const EdgeInsets.only(right: 4),
+                    padding: EdgeInsets.only(right: 4),
                     child: Icon(
                       Icons.add_circle_outline,
                       color: Colors.white,
