@@ -7,6 +7,7 @@ import 'package:tales_of_jcs/services/auth/auth_service.dart';
 import 'package:tales_of_jcs/services/tale/tale_service.dart';
 import 'package:tales_of_jcs/services/user/user_service.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/custom_expansion_tile.dart';
+import 'package:tales_of_jcs/utils/custom_widgets/custom_shimmer.dart';
 import 'package:tales_of_jcs/utils/custom_widgets/doppelganger_avatar.dart';
 import 'package:tales_of_jcs/utils/primary_app_theme.dart';
 import 'package:tales_of_jcs/utils/tale_story_utils.dart';
@@ -99,12 +100,14 @@ class _TaleStoryContentState extends State<TaleStoryContent> {
           key: _formKey,
           child: TextFormField(
               autofocus: true,
+              autovalidate: true,
               style: TextStyle(color: Colors.white),
               initialValue: widget.tale.story,
               textCapitalization: TextCapitalization.sentences,
               keyboardType: TextInputType.multiline,
               maxLines: 3,
               decoration: InputDecoration(
+                errorStyle: TextStyle(color: Colors.amber),
                 contentPadding: EdgeInsets.zero,
                 border: OutlineInputBorder(
                   borderSide: BorderSide.none,
@@ -120,8 +123,29 @@ class _TaleStoryContentState extends State<TaleStoryContent> {
                 _updatedTaleStory = value;
               },
               validator: (String value) {
+                if (value == widget.tale.story) {
+                  return "Please change the story if you want to update it";
+                }
+
                 return TaleStoryUtils.validateInput(value);
               }));
+    } else if (_isUpdatingTaleStory) {
+      return Shimmer.fromColors(
+        baseColor:
+            PrimaryAppTheme.primaryColorSwatch(Theme.of(context).brightness)
+                .shade700,
+        highlightColor:
+            PrimaryAppTheme.primaryColorSwatch(Theme.of(context).brightness)
+                .shade300,
+        child: Text(
+          "${widget.tale.story}",
+          style: Theme.of(context).textTheme.subhead.copyWith(
+              background: Paint()
+                ..color = PrimaryAppTheme.primaryColorSwatch(
+                        Theme.of(context).brightness)
+                    .shade700),
+        ),
+      );
     } else {
       return Text(
         "${widget.tale.story}",
@@ -134,7 +158,7 @@ class _TaleStoryContentState extends State<TaleStoryContent> {
   List<Widget> _storyMetadata(BuildContext context) {
     List<Widget> storyCardContent = [];
 
-    if (!_isEditingTaleStory) {
+    if (!_isEditingTaleStory && !_isUpdatingTaleStory) {
       storyCardContent.add(Divider(color: Theme.of(context).primaryColor));
 
       if (_publisher != null) {
@@ -212,7 +236,9 @@ class _TaleStoryContentState extends State<TaleStoryContent> {
                     child: Text("SAVE"),
                     onPressed: _validateUpdatedTaleStory,
                   );
-                } else {
+                }
+
+                if (!_isEditingTaleStory && !_isUpdatingTaleStory) {
                   yield OutlineButton(
                     borderSide:
                         BorderSide(color: Theme.of(context).primaryColor),
@@ -230,7 +256,7 @@ class _TaleStoryContentState extends State<TaleStoryContent> {
                   _userService.isUserJCS(_currentUser)) {
                 //Don't display the APPROVE button during editing as it may
                 // confuse the user
-                if (!_isEditingTaleStory) {
+                if (!_isEditingTaleStory && !_isUpdatingTaleStory) {
                   yield OutlineButton(
                     borderSide:
                         BorderSide(color: Theme.of(context).primaryColor),
@@ -260,26 +286,34 @@ class _TaleStoryContentState extends State<TaleStoryContent> {
       //Populate all data models from form
       _formKey.currentState.save();
 
-      Future<Map<String, dynamic>> createTaleFuture = _taleService
-          .updateTaleStoryTX(widget.tale.reference, _updatedTaleStory);
+      Future<Map<String, dynamic>> updateTaleFuture =
+          _taleService.updateTaleStory(widget.tale, _updatedTaleStory);
 
-      createTaleFuture.then((Map<String, dynamic> result) {
-        Tale updatedTale = result["updatedTale"];
+      //Create a future to allow the UI to at least show its animation
+      Future<Map<String, dynamic>> prettyUIFuture =
+          Future.delayed(Duration(seconds: 2), () => {"": ""});
+      Future<List<Map<String, dynamic>>> hinderedFuture =
+          Future.wait<Map<String, dynamic>>([updateTaleFuture, prettyUIFuture]);
+
+      hinderedFuture.then((List<Map<String, dynamic>> result) {
+        Tale updatedTale = result[0]["updatedTale"];
 
         //Reset the form's state
         setState(() {
           _isUpdatingTaleStory = false;
           widget.tale = updatedTale;
-          _formKey.currentState.reset();
+          _formKey.currentState?.reset();
         });
 
         Scaffold.of(context).showSnackBar(
-            SnackBar(content: Text("The tale story has been updated!")));
+            SnackBar(content: Text("The story has been updated!")));
       }).catchError((error) {
         setState(() {
           _isEditingTaleStory = false;
           _isUpdatingTaleStory = false;
         });
+
+        print("ERROR: $error");
 
         Scaffold.of(context).showSnackBar(SnackBar(
             content: Text("Failed to update story, please try again later")));

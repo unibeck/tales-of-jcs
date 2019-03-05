@@ -50,6 +50,21 @@ class TaleService {
     return _firestore.collection(talesCollection).document().setData(taleMap);
   }
 
+  Future<Map<String, dynamic>> updateTaleStory(
+      Tale tale, String updatedTaleStory) async {
+    DocumentReference userRef = await _authService.getCurrentUserDocRef();
+
+    tale.story = updatedTaleStory;
+    tale.lastModifiedUser = userRef;
+
+    tale.reference.updateData(<String, dynamic>{
+      "story": updatedTaleStory,
+      "lastModifiedUser": userRef
+    });
+
+    return {"updatedTale": tale};
+  }
+
   Future<Map<String, dynamic>> updateTaleStoryTX(
       DocumentReference taleRef, String updatedTaleStory) async {
     DocumentReference userRef = await _authService.getCurrentUserDocRef();
