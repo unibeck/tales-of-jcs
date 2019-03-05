@@ -56,10 +56,12 @@ class TaleService {
 
     tale.story = updatedTaleStory;
     tale.lastModifiedUser = userRef;
+    tale.dateLastModified = Timestamp.now();
 
     tale.reference.updateData(<String, dynamic>{
       "story": updatedTaleStory,
-      "lastModifiedUser": userRef
+      "lastModifiedUser": userRef,
+      "dateLastModified": FieldValue.serverTimestamp()
     });
 
     return {"updatedTale": tale};

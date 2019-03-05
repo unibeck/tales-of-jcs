@@ -161,12 +161,17 @@ class _TaleStoryContentState extends State<TaleStoryContent> {
     if (!_isEditingTaleStory && !_isUpdatingTaleStory) {
       storyCardContent.add(Divider(color: Theme.of(context).primaryColor));
 
-      if (_publisher != null) {
+      if (widget.tale.dateCreated != null && _publisher != null) {
+        DateFormat formatter = DateFormat.yMMMMd("en_US");
+        String formattedCreatedDate =
+            formatter.format(widget.tale.dateCreated.toDate());
+
         storyCardContent.add(ListTile(
             contentPadding: EdgeInsets.zero,
             leading: DoppelgangerAvatar.buildAvatar(context, _publisher,
                 accountCircleSize: 40),
-            title: Text("Original story published by ${_publisher.name}",
+            title: Text(
+                "Original story published by ${_publisher.name} on $formattedCreatedDate",
                 style: Theme.of(context)
                     .textTheme
                     .body1
