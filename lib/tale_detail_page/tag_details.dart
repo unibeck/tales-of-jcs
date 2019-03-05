@@ -140,8 +140,12 @@ class _TagDetailsState extends State<TagDetails> {
     return List.unmodifiable(() sync* {
       for (String str in _initShimmerChipStrings) {
         yield Shimmer.fromColors(
-            baseColor: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
-            highlightColor: PrimaryAppTheme.primaryYaleColorSwatch.shade300,
+            baseColor:
+                PrimaryAppTheme.primaryColorSwatch(Theme.of(context).brightness)
+                    .shade700,
+            highlightColor:
+                PrimaryAppTheme.primaryColorSwatch(Theme.of(context).brightness)
+                    .shade300,
             child: Chip(
               label: Text(str),
             ));
@@ -160,13 +164,19 @@ class _TagDetailsState extends State<TagDetails> {
           child: Shimmer.fromColors(
             blendMode: BlendMode.dstATop,
             period: Duration(seconds: 1),
-            baseColor: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
-            highlightColor: PrimaryAppTheme.primaryYaleColorSwatch.shade300,
+            baseColor:
+                PrimaryAppTheme.primaryColorSwatch(Theme.of(context).brightness)
+                    .shade700,
+            highlightColor:
+                PrimaryAppTheme.primaryColorSwatch(Theme.of(context).brightness)
+                    .shade300,
             child: Container(
               margin: EdgeInsets.all(2),
               padding: EdgeInsets.fromLTRB(4, 2, 2, 2),
               decoration: BoxDecoration(
-                color: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
+                color: PrimaryAppTheme.primaryColorSwatch(
+                        Theme.of(context).brightness)
+                    .shade700,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: _tagChipContent(tag),
@@ -179,7 +189,9 @@ class _TagDetailsState extends State<TagDetails> {
         message: "Long press to like a tag",
         onLongPress: () => _updateLikeForTag(tag),
         child: Chip(
-            backgroundColor: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
+            backgroundColor:
+                PrimaryAppTheme.primaryColorSwatch(Theme.of(context).brightness)
+                    .shade700,
             labelPadding: EdgeInsets.only(left: 2),
             label: _tagChipContent(tag)),
       );
@@ -311,7 +323,8 @@ class _TagDetailsState extends State<TagDetails> {
       BuildContext context, bool withAddTag, bool withAddTagAsHero) {
     return Card(
       elevation: 0,
-      color: Theme.of(context).primaryColor,
+      color: PrimaryAppTheme.primaryColorSwatch(Theme.of(context).brightness)
+          .shade700,
       margin: EdgeInsets.symmetric(vertical: 6),
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(32))),
@@ -324,15 +337,30 @@ class _TagDetailsState extends State<TagDetails> {
             children: List.unmodifiable(() sync* {
               yield Padding(
                 padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                child: Text("ADD NEW TAG"),
+                child: Text(
+                  "ADD NEW TAG",
+                  style: TextStyle(color: Colors.white),
+                ),
               );
               if (withAddTag) {
                 if (withAddTagAsHero) {
                   yield Hero(
                       tag: TagModalManifest.getNewChipAddIconHeroTag(),
-                      child: Icon(Icons.add_circle_outline));
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 4),
+                        child: Icon(
+                          Icons.add_circle_outline,
+                          color: Colors.white,
+                        ),
+                      ));
                 } else {
-                  yield Icon(Icons.add_circle_outline);
+                  yield Padding(
+                    padding: EdgeInsets.only(right: 4),
+                    child: Icon(
+                      Icons.add_circle_outline,
+                      color: Colors.white,
+                    ),
+                  );
                 }
               }
             }()),

@@ -1,18 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:tales_of_jcs/models/tale/tale.dart';
-import 'package:tales_of_jcs/models/user/user.dart';
-import 'package:tales_of_jcs/services/auth/auth_service.dart';
-import 'package:tales_of_jcs/services/user/user_service.dart';
 import 'package:tales_of_jcs/tale_detail_page/rating_details.dart';
 import 'package:tales_of_jcs/tale_detail_page/tag_details.dart';
 import 'package:tales_of_jcs/tale_detail_page/tale_rating_dialog.dart';
-import 'package:tales_of_jcs/utils/custom_widgets/custom_expansion_tile.dart';
-import 'package:tales_of_jcs/utils/custom_widgets/doppelganger_avatar.dart';
-import 'package:tales_of_jcs/utils/primary_app_theme.dart';
+import 'package:tales_of_jcs/tale_detail_page/tale_story_content.dart';
 
-class TaleDetailPage extends StatefulWidget {
+class TaleDetailPage extends StatelessWidget {
   static const String routeName = "/TaleDetailPage";
 
   TaleDetailPage({Key key, @required this.tale}) : super(key: key);
@@ -20,50 +13,10 @@ class TaleDetailPage extends StatefulWidget {
   Tale tale;
 
   @override
-  _TaleDetailPageState createState() => _TaleDetailPageState();
-}
-
-///Purposely leave the tale title and tale story static and not live as that
-/// would be jarring as a user to be reading and having text change on you
-class _TaleDetailPageState extends State<TaleDetailPage> {
-  //View related
-  User _publisher;
-  bool _loadingPublisher = false;
-  User _lastModifiedUser;
-  bool _loadingLastModifiedUser = false;
-
-  User _currentUser;
-
-  //Services
-  final AuthService _authService = AuthService.instance;
-  final UserService _userService = UserService.instance;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _authService.getCurrentUserDocRef().then((DocumentReference userRef) {
-      userRef.get().then((DocumentSnapshot userSnapshot) {
-        User user = User.fromSnapshot(userSnapshot);
-        if (mounted) {
-          setState(() {
-            _currentUser = user;
-          });
-        }
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Hero(
       createRectTween: _createRectTween,
-      tag: "${widget.tale.reference.documentID}_background",
+      tag: "${tale.reference.documentID}_background",
       child: Scaffold(
         appBar: AppBar(
           elevation: 0,
@@ -75,47 +28,16 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
             ListView(children: <Widget>[
               ListTile(
                 title: Hero(
-                    child: Text(widget.tale.title,
+                    child: Text(tale.title,
                         style: Theme.of(context)
                             .textTheme
                             .display2
                             .copyWith(color: Colors.white)),
-                    tag: "${widget.tale.reference.documentID}_title"),
+                    tag: "${tale.reference.documentID}_title"),
               ),
-              RatingDetails(tale: widget.tale),
-              ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                title: Card(
-                  elevation: 0,
-                  margin: EdgeInsets.zero,
-                  color: PrimaryAppTheme.primaryYaleColorSwatch.shade800,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: CustomExpansionTile(
-                      onExpansionChanged: (bool isOpening) {
-                        if (isOpening) {
-                          _setPublisher();
-                          _setLastModifiedUser();
-                        }
-                      },
-                      iconColor: Colors.white,
-                      title: Text(
-                        "${widget.tale.story}",
-                        style: Theme.of(context)
-                            .textTheme
-                            .subhead
-                            .copyWith(color: Colors.white),
-                      ),
-                      children: _storyMetadata(context),
-                    ),
-                  ),
-                ),
-              ),
-              TagDetails(tale: widget.tale),
+              RatingDetails(tale: tale),
+              TaleStoryContent(tale: tale),
+              TagDetails(tale: tale),
             ]),
             Align(
               alignment: Alignment.bottomCenter,
@@ -125,7 +47,7 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
                     RaisedButton(
-                      onPressed: _showRatingDialog,
+                      onPressed: () => _showRatingDialog(context),
                       child: Text("Rate"),
                     ),
                   ],
@@ -142,143 +64,12 @@ class _TaleDetailPageState extends State<TaleDetailPage> {
     return MaterialRectCenterArcTween(begin: begin, end: end);
   }
 
-  List<Widget> _storyMetadata(BuildContext context) {
-    List<Widget> storyCardContent = [
-      Divider(color: Theme.of(context).primaryColor)
-    ];
-
-    if (_publisher != null) {
-      storyCardContent.add(ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: DoppelgangerAvatar.buildAvatar(context, _publisher,
-              accountCircleSize: 40),
-          title: Text("Original story published by ${_publisher.name}",
-              style: Theme.of(context)
-                  .textTheme
-                  .body1
-                  .copyWith(color: Colors.white))));
-    } else if (_loadingPublisher) {
-      storyCardContent.add(Text("Loading original publisher",
-          style:
-              Theme.of(context).textTheme.body1.copyWith(color: Colors.white)));
-    }
-
-    if (widget.tale.dateLastModified != null && _lastModifiedUser != null) {
-      DateFormat formatter = DateFormat.yMMMMd("en_US");
-      String formattedLastModifiedDate =
-          formatter.format(widget.tale.dateLastModified.toDate());
-
-      storyCardContent.add(ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: DoppelgangerAvatar.buildAvatar(context, _lastModifiedUser,
-              accountCircleSize: 40),
-          title: Text(
-              "Last modified by ${_lastModifiedUser.name} on $formattedLastModifiedDate",
-              style: Theme.of(context)
-                  .textTheme
-                  .body1
-                  .copyWith(color: Colors.white))));
-    } else if (_loadingLastModifiedUser) {
-      storyCardContent.add(Text("Loading last editor",
-          style:
-              Theme.of(context).textTheme.body1.copyWith(color: Colors.white)));
-    }
-
-    if (_currentUser != null) {
-      if (_publisher?.reference == _currentUser.reference ||
-          _currentUser.isAdmin ||
-          _userService.isUserJCS(_currentUser)) {
-        storyCardContent.add(ButtonTheme.bar(
-          child: ButtonBar(
-            children: List.unmodifiable(() sync* {
-              if (_publisher?.reference == _currentUser.reference ||
-                  _currentUser.isAdmin ||
-                  _userService.isUserJCS(_currentUser)) {
-                yield FlatButton(
-                  child: Text("EDIT"),
-                  onPressed: () {},
-                );
-              }
-              if (_currentUser.isAdmin ||
-                  _userService.isUserJCS(_currentUser)) {
-                yield FlatButton(
-                  child: Text("APPROVE"),
-                  onPressed: () {},
-                );
-              }
-            }()),
-          ),
-        ));
-      }
-    }
-
-    return storyCardContent;
-  }
-
-  void _setPublisher() {
-    if (_publisher != null) {
-      return;
-    }
-
-    if (widget.tale.publisher == null) {
-      setState(() {
-        _loadingPublisher = false;
-      });
-      return;
-    } else {
-      setState(() {
-        _loadingPublisher = true;
-      });
-    }
-
-    widget.tale.publisher.get().then((DocumentSnapshot snapshot) {
-      setState(() {
-        _publisher = User.fromSnapshot(snapshot);
-        _loadingPublisher = false;
-      });
-    }).catchError((err) {
-      print(err);
-      setState(() {
-        _loadingPublisher = false;
-      });
-    });
-  }
-
-  void _setLastModifiedUser() {
-    if (_lastModifiedUser != null) {
-      return;
-    }
-
-    if (widget.tale.lastModifiedUser == null) {
-      setState(() {
-        _loadingLastModifiedUser = false;
-      });
-      return;
-    } else {
-      setState(() {
-        _loadingLastModifiedUser = true;
-      });
-    }
-
-    widget.tale.lastModifiedUser.get().then((DocumentSnapshot snapshot) {
-      setState(() {
-        _lastModifiedUser = User.fromSnapshot(snapshot);
-        _loadingLastModifiedUser = false;
-      });
-    }).catchError((err) {
-      print(err);
-      setState(() {
-        _loadingLastModifiedUser = false;
-      });
-    });
-  }
-
-  void _showRatingDialog() {
+  void _showRatingDialog(BuildContext context) {
     showDialog(
         barrierDismissible: true,
         context: context,
         builder: (BuildContext context) {
-          return TaleRatingDialogContent(tale: widget.tale);
+          return TaleRatingDialogContent(tale: tale);
         });
   }
 }
